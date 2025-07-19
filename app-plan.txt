@@ -1,0 +1,47 @@
+[HOME MANAGEMENT APP PLAN]
+
+Purpose:
+Build a full-stack app to manage house rent and daily meal cost sharing among members,
+using Angular (frontend), Express (backend), and MongoDB (database), all served locally with global access via ngrok.
+
+Features Overview:
+
+1. House Member Management:
+   - Add/Edit/Delete members
+   - Assign each member to a room
+
+2. House Setup:
+   - Define rooms (e.g., Room A, Room B)
+   - Set rent percentage per room (e.g., Room A = 60%, Room B = 40%)
+   - Divide total house rent accordingly
+   - If multiple people in a room, rent is shared equally within that room
+
+3. Meal Wallet & Costing:
+   - Members can add money to their meal wallet (wallet history saved)
+   - Admin inputs daily bazar cost (date, description, amount)
+   - Admin inputs how many meals each person ate per day
+   - Calculate total meals, meal rate (total bazar cost / total meals)
+   - Deduct cost from each member’s wallet based on meals eaten
+
+4. Reporting:
+   - Show current wallet balance of each member
+   - Monthly or daily meal report
+   - House rent report per person
+
+5. Data Access & Hosting:
+   - Backend (Express + MongoDB) runs on local PC (port 5000)
+   - Frontend (Angular) runs on local PC (port 4200)
+   - ngrok used to expose frontend globally for remote access
+
+Optional Features (Later):
+   - Authentication (password-based or PIN for admin access)
+   - PDF report generation
+   - Monthly data archiving or reset
+   - Export/Import system data as JSON for backup
+
+Tools & Technologies:
+- Frontend: Angular + Angular Material + ngx-charts (optional)
+- Backend: Node.js + Express
+- Database: MongoDB (local instance)
+- Communication: REST API (JSON)
+- Exposure: ngrok (for public URL)
