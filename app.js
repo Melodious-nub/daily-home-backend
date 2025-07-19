@@ -20,7 +20,7 @@ app.use('/api/rooms', require('./routes/roomRoutes'));
 app.use('/api/wallets', require('./routes/walletRoutes'));
 app.use('/api/bazars', require('./routes/bazarRoutes'));
 app.use('/api/meals', require('./routes/mealRoutes'));
-app.use('/api/calculate', require('./routes/calculateRoutes'));
+app.use('/api/summary', require('./routes/summaryRoutes'));
 
 app.get('/', (req, res) => res.send('Home Management API Running'));
 
