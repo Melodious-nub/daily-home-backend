@@ -41,7 +41,7 @@ To simplify monthly rent and meal cost sharing in shared housing environments. T
 - Filter data by date range (from - to)
 
 ### 🌐 5. Hosting & Access
-- Backend runs on local machine (`localhost:5000`)
+- Backend runs on local machine (`localhost:3000`)
 - Frontend (Angular) runs at `localhost:4200`
 - Use [ngrok](https://ngrok.com/) to expose frontend publicly for global access
 
