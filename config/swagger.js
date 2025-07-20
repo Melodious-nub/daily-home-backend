@@ -10,7 +10,8 @@ const options = {
     },
     servers: [
       {
-        url: 'https://your-app.onrender.com',
+        // url: 'http://localhost:3000',
+        url: 'https://your-app.onrender.com:10000',
       },
     ],
     tags: [
