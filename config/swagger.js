@@ -11,7 +11,7 @@ const options = {
     servers: [
       {
         // url: 'http://localhost:3000',
-        url: 'https://your-app.onrender.com:10000',
+        url: 'https://daily-home-backend.onrender.com:10000',
       },
     ],
     tags: [
