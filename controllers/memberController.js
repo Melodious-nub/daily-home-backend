@@ -11,14 +11,15 @@ exports.getMembers = async (req, res) => {
 
 exports.createMember = async (req, res) => {
   try {
-    const { name, room } = req.body;
-    const newMember = new Member({ name, room });
+    const { name, room, picture } = req.body;
+    const newMember = new Member({ name, room, picture });
     const savedMember = await newMember.save();
     res.status(201).json(savedMember);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+
 
 exports.deleteMember = async (req, res) => {
   try {

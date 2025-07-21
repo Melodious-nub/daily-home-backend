@@ -24,8 +24,15 @@ const memberController = require('../controllers/memberController');
  *                   name:
  *                     type: string
  *                   room:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                   picture:
  *                     type: string
- *                     description: The ID of the room that the member belongs to
+ *                     description: URL or base64 of the member's profile picture
  */
 router.get('/', memberController.getMembers);
 
@@ -51,6 +58,9 @@ router.get('/', memberController.getMembers);
  *               room:
  *                 type: string
  *                 description: The ID of the room the member will be assigned to (ObjectId of 'Room')
+ *               picture:
+ *                 type: string
+ *                 description: Optional picture URL or base64 string
  *     responses:
  *       201:
  *         description: Member created successfully
@@ -64,6 +74,8 @@ router.get('/', memberController.getMembers);
  *                 name:
  *                   type: string
  *                 room:
+ *                   type: string
+ *                 picture:
  *                   type: string
  *       400:
  *         description: Bad request, missing required fields or invalid data
