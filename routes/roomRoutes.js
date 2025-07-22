@@ -8,10 +8,11 @@ const roomController = require('../controllers/roomController');
  *   get:
  *     tags:
  *       - Rooms
- *     description: Get all rooms
+ *     summary: Get all rooms with member, wallet, and meal info
+ *     description: Returns all rooms with member list, wallet balance, and total meals
  *     responses:
  *       200:
- *         description: List of all rooms
+ *         description: List of all rooms with details
  *         content:
  *           application/json:
  *             schema:
@@ -25,7 +26,23 @@ const roomController = require('../controllers/roomController');
  *                     type: string
  *                   rentPercent:
  *                     type: number
- *                     description: Rent percentage for the room
+ *                   memberCount:
+ *                     type: number
+ *                   walletBalance:
+ *                     type: number
+ *                   totalMeals:
+ *                     type: number
+ *                   members:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         picture:
+ *                           type: string
  */
 router.get('/', roomController.getRooms);
 
