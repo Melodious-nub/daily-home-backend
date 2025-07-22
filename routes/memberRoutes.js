@@ -8,10 +8,10 @@ const memberController = require('../controllers/memberController');
  *   get:
  *     tags:
  *       - Members
- *     description: Get all members
+ *     description: Get all members with their total meals and wallet amount given in the current month, including last wallet given date
  *     responses:
  *       200:
- *         description: List of all members
+ *         description: List of all members with meal and wallet stats
  *         content:
  *           application/json:
  *             schema:
@@ -33,6 +33,17 @@ const memberController = require('../controllers/memberController');
  *                   picture:
  *                     type: string
  *                     description: URL or base64 of the member's profile picture
+ *                   totalMeals:
+ *                     type: integer
+ *                     description: Total meals taken by the member in the current month
+ *                   totalWalletGiven:
+ *                     type: number
+ *                     description: Total wallet amount given by the member in the current month
+ *                   lastWalletGivenDate:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
+ *                     description: The date of the last wallet amount given in the current month; null if none
  */
 router.get('/', memberController.getMembers);
 
