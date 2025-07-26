@@ -32,6 +32,7 @@ const bazarController = require('../controllers/bazarController');
  *                         name: { type: string }
  *                         picture: { type: string }
  */
+router.get('/', bazarController.getBazars);
 
 /**
  * @swagger
