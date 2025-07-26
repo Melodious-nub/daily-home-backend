@@ -8,54 +8,51 @@ const summaryController = require('../controllers/summaryController');
  *   get:
  *     tags:
  *       - Summary
- *     description: Get a summary report of the bazar cost, total meals, meal rate, and financial report for each member
+ *     summary: Get monthly summary report
+ *     description: >
+ *       Returns financial and meal summary for the current month or a selected month.
+ *       It includes total meals, total wallet, bazar cost, meal rate, and per-member stats.
  *     parameters:
  *       - in: query
- *         name: from
- *         required: true
- *         description: The start date of the report (ISO 8601 format).
+ *         name: month
+ *         required: false
+ *         description: Filter by month (1–12). Defaults to current month if not provided.
  *         schema:
- *           type: string
- *           format: date
- *       - in: query
- *         name: to
- *         required: true
- *         description: The end date of the report (ISO 8601 format).
- *         schema:
- *           type: string
- *           format: date
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
  *     responses:
  *       200:
- *         description: Summary report generated successfully
+ *         description: Summary report for selected month
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 summary:
- *                   type: object
- *                   properties:
- *                     from:
- *                       type: string
- *                       format: date
- *                     to:
- *                       type: string
- *                       format: date
- *                     totalBazarCost:
- *                       type: number
- *                       description: The total cost of bazar for the given period
- *                     totalMeals:
- *                       type: number
- *                       description: The total number of meals for the given period
- *                     mealRate:
- *                       type: number
- *                       description: The rate of each meal (totalBazarCost / totalMeals)
- *                 report:
+ *                 month:
+ *                   type: integer
+ *                   description: Month number being summarized
+ *                 todaysTotalMealCount:
+ *                   type: number
+ *                   description: Total meals today (12PM–12AM BD)
+ *                 totalMealByThisMonth:
+ *                   type: number
+ *                 totalWalletBalance:
+ *                   type: number
+ *                 totalRemainingWalletBalance:
+ *                   type: number
+ *                 mealRate:
+ *                   type: number
+ *                 memberWise:
  *                   type: array
  *                   items:
  *                     type: object
  *                     properties:
- *                       member:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       picture:
  *                         type: string
  *                       room:
  *                         type: string
@@ -65,12 +62,10 @@ const summaryController = require('../controllers/summaryController');
  *                         type: number
  *                       totalCost:
  *                         type: number
- *                         description: Total cost for the meals consumed by the member
  *                       remaining:
  *                         type: number
- *                         description: Remaining balance after meal cost deduction
  *       500:
- *         description: Error generating the summary report
+ *         description: Failed to generate summary
  */
 router.get('/', summaryController.getSummary);
 

@@ -8,7 +8,7 @@ const bazarController = require('../controllers/bazarController');
  *   get:
  *     tags:
  *       - Bazars
- *     description: Get all bazars
+ *     description: Get all bazar entries with member details
  *     responses:
  *       200:
  *         description: List of all bazars
@@ -19,18 +19,19 @@ const bazarController = require('../controllers/bazarController');
  *               items:
  *                 type: object
  *                 properties:
- *                   _id:
- *                     type: string
- *                   date:
- *                     type: string
- *                     format: date
- *                   cost:
- *                     type: number
- *                   description:
- *                     type: string
- *                     nullable: true
+ *                   _id: { type: string }
+ *                   date: { type: string, format: date }
+ *                   cost: { type: number }
+ *                   description: { type: string, nullable: true }
+ *                   members:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         _id: { type: string }
+ *                         name: { type: string }
+ *                         picture: { type: string }
  */
-router.get('/', bazarController.getBazars);
 
 /**
  * @swagger
@@ -38,25 +39,22 @@ router.get('/', bazarController.getBazars);
  *   post:
  *     tags:
  *       - Bazars
- *     description: Add a new bazar entry
+ *     description: Add a new bazar entry with multiple members
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - date
- *               - cost
+ *             required: [date, cost]
  *             properties:
- *               date:
- *                 type: string
- *                 format: date
- *               cost:
- *                 type: number
- *               description:
- *                 type: string
- *                 nullable: true
+ *               date: { type: string, format: date }
+ *               cost: { type: number }
+ *               description: { type: string, nullable: true }
+ *               members:
+ *                 type: array
+ *                 items: { type: string }
+ *                 description: Array of member IDs
  *     responses:
  *       201:
  *         description: Bazar added successfully
@@ -65,18 +63,20 @@ router.get('/', bazarController.getBazars);
  *             schema:
  *               type: object
  *               properties:
- *                 _id:
- *                   type: string
- *                 date:
- *                   type: string
- *                   format: date
- *                 cost:
- *                   type: number
- *                 description:
- *                   type: string
- *                   nullable: true
+ *                 _id: { type: string }
+ *                 date: { type: string, format: date }
+ *                 cost: { type: number }
+ *                 description: { type: string }
+ *                 members:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id: { type: string }
+ *                       name: { type: string }
+ *                       picture: { type: string }
  *       400:
- *         description: Bad request, missing required fields or invalid data
+ *         description: Invalid request
  */
 router.post('/', bazarController.addBazar);
 

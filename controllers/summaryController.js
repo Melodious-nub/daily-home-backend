@@ -1,120 +1,94 @@
-const Member = require('../models/Member');
-const Wallet = require('../models/Wallet');
 const Meal = require('../models/Meal');
+const Wallet = require('../models/Wallet');
 const Bazar = require('../models/Bazar');
+const Member = require('../models/Member');
 
 exports.getSummary = async (req, res) => {
   try {
-    const { from, to } = req.query;
+    const month = parseInt(req.query.month) || (new Date().getMonth() + 1); // 1–12
+    const year = new Date().getFullYear();
 
-    const start = new Date(from);
-    const end = new Date(to);
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0, 23, 59, 59, 999);
 
-    // 1. Total Bazar Cost
-    const totalBazarCostAgg = await Bazar.aggregate([
-      {
-        $match: {
-          date: { $gte: start, $lte: end }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalCost: { $sum: '$cost' }
-        }
-      }
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 6); // 12PM BD
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 5, 59, 59); // 11:59AM BD
+
+    const todayMealsAgg = await Meal.aggregate([
+      { $match: { date: { $gte: todayStart, $lte: todayEnd } } },
+      { $group: { _id: null, totalMeals: { $sum: '$meals' } } }
     ]);
-    const totalBazarCost = totalBazarCostAgg[0]?.totalCost || 0;
+    const todaysTotalMealCount = todayMealsAgg[0]?.totalMeals || 0;
 
-    // 2. Total Meals
-    const totalMealsAgg = await Meal.aggregate([
-      {
-        $match: {
-          date: { $gte: start, $lte: end }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalMeals: { $sum: '$meals' }
-        }
-      }
+    const monthMealsAgg = await Meal.aggregate([
+      { $match: { date: { $gte: start, $lte: end } } },
+      { $group: { _id: null, totalMeals: { $sum: '$meals' } } }
     ]);
-    const totalMeals = totalMealsAgg[0]?.totalMeals || 0;
+    const totalMealByThisMonth = monthMealsAgg[0]?.totalMeals || 0;
 
-    // 3. Meal Rate
-    const mealRate = totalMeals > 0 ? totalBazarCost / totalMeals : 0;
-
-    // 4. Wallets: Total money per member
-    const wallets = await Wallet.aggregate([
-      {
-        $match: {
-          date: { $gte: start, $lte: end }
-        }
-      },
-      {
-        $group: {
-          _id: '$member',
-          totalAmount: { $sum: '$amount' }
-        }
-      }
+    const walletAgg = await Wallet.aggregate([
+      { $match: { date: { $gte: start, $lte: end } } },
+      { $group: { _id: null, totalAmount: { $sum: '$amount' } } }
     ]);
-    const walletMap = {};
-    wallets.forEach(w => {
-      walletMap[w._id.toString()] = w.totalAmount;
-    });
+    const totalWalletBalance = walletAgg[0]?.totalAmount || 0;
 
-    // 5. Meals: Total meal per member
-    const meals = await Meal.aggregate([
-      {
-        $match: {
-          date: { $gte: start, $lte: end }
-        }
-      },
-      {
-        $group: {
-          _id: '$member',
-          totalMeal: { $sum: '$meals' }
-        }
-      }
+    const bazarAgg = await Bazar.aggregate([
+      { $match: { date: { $gte: start, $lte: end } } },
+      { $group: { _id: null, totalCost: { $sum: '$cost' } } }
+    ]);
+    const totalBazarCost = bazarAgg[0]?.totalCost || 0;
+
+    const mealRate = totalMealByThisMonth > 0 ? totalBazarCost / totalMealByThisMonth : 0;
+    const totalRemainingWalletBalance = totalWalletBalance - totalBazarCost;
+
+    const memberMeals = await Meal.aggregate([
+      { $match: { date: { $gte: start, $lte: end } } },
+      { $group: { _id: '$member', totalMeal: { $sum: '$meals' } } }
     ]);
     const mealMap = {};
-    meals.forEach(m => {
-      mealMap[m._id.toString()] = m.totalMeal;
-    });
+    memberMeals.forEach(entry => mealMap[entry._id.toString()] = entry.totalMeal);
 
-    // 6. Members
+    const memberWallets = await Wallet.aggregate([
+      { $match: { date: { $gte: start, $lte: end } } },
+      { $group: { _id: '$member', totalWallet: { $sum: '$amount' } } }
+    ]);
+    const walletMap = {};
+    memberWallets.forEach(entry => walletMap[entry._id.toString()] = entry.totalWallet);
+
     const members = await Member.find().populate('room');
 
-    const report = members.map(member => {
-      const memberId = member._id.toString();
-      const totalMeal = mealMap[memberId] || 0;
-      const totalWallet = walletMap[memberId] || 0;
-      const totalCost = totalMeal * mealRate;
-      const remaining = totalWallet - totalCost;
+    const memberWise = members.map(m => {
+      const id = m._id.toString();
+      const totalMeal = mealMap[id] || 0;
+      const totalWallet = walletMap[id] || 0;
+      const mealCost = totalMeal * mealRate;
+      const remaining = totalWallet - mealCost;
 
       return {
-        member: member.name,
-        room: member.room.name,
+        _id: m._id,
+        name: m.name,
+        picture: m.picture,
+        room: m.room?.name || '',
         totalMeal,
         totalWallet,
-        totalCost: parseFloat(totalCost.toFixed(2)),
+        totalCost: parseFloat(mealCost.toFixed(2)),
         remaining: parseFloat(remaining.toFixed(2))
       };
     });
 
     res.json({
-      summary: {
-        from,
-        to,
-        totalBazarCost,
-        totalMeals,
-        mealRate: parseFloat(mealRate.toFixed(2))
-      },
-      report
+      month,
+      todaysTotalMealCount,
+      totalMealByThisMonth,
+      totalWalletBalance,
+      totalRemainingWalletBalance: parseFloat(totalRemainingWalletBalance.toFixed(2)),
+      mealRate: parseFloat(mealRate.toFixed(2)),
+      memberWise
     });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Error generating summary report.' });
+    res.status(500).json({ message: 'Failed to generate monthly summary.' });
   }
 };
