@@ -44,7 +44,7 @@ const summaryController = require('../controllers/summaryController');
  *                   description: Total meals today (Bangladesh time, 12AM-11:59PM)
  *                 todayMealsBreakDownByMembers:
  *                   type: string
- *                   description: Comma-separated breakdown of today's meals by member (e.g., "John: 2, Jane: 1, Bob: 3")
+ *                   description: Comma-separated breakdown of today's meals by member (e.g. "John 2, Jane 1, Bob 3")
  *                 totalMealByThisMonth:
  *                   type: number
  *                   description: Total number of meals for this month
