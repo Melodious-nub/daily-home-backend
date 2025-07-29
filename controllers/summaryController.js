@@ -3,45 +3,71 @@ const Wallet = require('../models/Wallet');
 const Bazar = require('../models/Bazar');
 const Member = require('../models/Member');
 
+// Helper function to get Bangladesh time
+const getBangladeshTime = () => {
+  const now = new Date();
+  // Bangladesh is UTC+6
+  const bdTime = new Date(now.getTime() + (6 * 60 * 60 * 1000));
+  return bdTime;
+};
+
+// Helper function to get today's date range in Bangladesh time (12 AM to 11:59 PM)
+const getTodayDateRange = () => {
+  const bdNow = getBangladeshTime();
+  const todayStart = new Date(bdNow.getFullYear(), bdNow.getMonth(), bdNow.getDate());
+  const todayEnd = new Date(bdNow.getFullYear(), bdNow.getMonth(), bdNow.getDate(), 23, 59, 59, 999);
+  
+  // Convert back to UTC for database queries
+  const utcTodayStart = new Date(todayStart.getTime() - (6 * 60 * 60 * 1000));
+  const utcTodayEnd = new Date(todayEnd.getTime() - (6 * 60 * 60 * 1000));
+  
+  return { utcTodayStart, utcTodayEnd, bdNow };
+};
+
 exports.getSummary = async (req, res) => {
   try {
-    const month = parseInt(req.query.month) || (new Date().getMonth() + 1); // 1–12
-    const year = new Date().getFullYear();
+    const month = parseInt(req.query.month) || (getBangladeshTime().getMonth() + 1); // 1–12
+    const year = getBangladeshTime().getFullYear();
 
+    // Monthly date range (1st day to last day of month)
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 0, 23, 59, 59, 999);
 
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 6); // 12PM BD
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 5, 59, 59); // 11:59AM BD
+    // Get today's date range in Bangladesh time
+    const { utcTodayStart, utcTodayEnd, bdNow } = getTodayDateRange();
 
+    // Today's total meal count (Bangladesh time: 12 AM to 11:59 PM)
     const todayMealsAgg = await Meal.aggregate([
-      { $match: { date: { $gte: todayStart, $lte: todayEnd } } },
+      { $match: { date: { $gte: utcTodayStart, $lte: utcTodayEnd } } },
       { $group: { _id: null, totalMeals: { $sum: '$meals' } } }
     ]);
     const todaysTotalMealCount = todayMealsAgg[0]?.totalMeals || 0;
 
+    // Monthly meal count
     const monthMealsAgg = await Meal.aggregate([
       { $match: { date: { $gte: start, $lte: end } } },
       { $group: { _id: null, totalMeals: { $sum: '$meals' } } }
     ]);
     const totalMealByThisMonth = monthMealsAgg[0]?.totalMeals || 0;
 
+    // Total wallet balance for the month
     const walletAgg = await Wallet.aggregate([
       { $match: { date: { $gte: start, $lte: end } } },
       { $group: { _id: null, totalAmount: { $sum: '$amount' } } }
     ]);
     const totalWalletBalance = walletAgg[0]?.totalAmount || 0;
 
+    // Total bazar cost (total expense) for the month
     const bazarAgg = await Bazar.aggregate([
       { $match: { date: { $gte: start, $lte: end } } },
       { $group: { _id: null, totalCost: { $sum: '$cost' } } }
     ]);
-    const totalBazarCost = bazarAgg[0]?.totalCost || 0;
+    const totalExpense = bazarAgg[0]?.totalCost || 0;
 
-    const mealRate = totalMealByThisMonth > 0 ? totalBazarCost / totalMealByThisMonth : 0;
-    const totalRemainingWalletBalance = totalWalletBalance - totalBazarCost;
+    const mealRate = totalMealByThisMonth > 0 ? totalExpense / totalMealByThisMonth : 0;
+    const totalRemainingWalletBalance = totalWalletBalance - totalExpense;
 
+    // Member-wise meal aggregation for the month
     const memberMeals = await Meal.aggregate([
       { $match: { date: { $gte: start, $lte: end } } },
       { $group: { _id: '$member', totalMeal: { $sum: '$meals' } } }
@@ -49,6 +75,7 @@ exports.getSummary = async (req, res) => {
     const mealMap = {};
     memberMeals.forEach(entry => mealMap[entry._id.toString()] = entry.totalMeal);
 
+    // Member-wise wallet aggregation for the month
     const memberWallets = await Wallet.aggregate([
       { $match: { date: { $gte: start, $lte: end } } },
       { $group: { _id: '$member', totalWallet: { $sum: '$amount' } } }
@@ -77,11 +104,18 @@ exports.getSummary = async (req, res) => {
       };
     });
 
+    // Format today's date and time in Bangladesh timezone
+    const todayDate = bdNow.toISOString().split('T')[0]; // YYYY-MM-DD
+    const todayTime = bdNow.toTimeString().split(' ')[0]; // HH:MM:SS
+
     res.json({
       month,
+      todayDate,
+      todayTime,
       todaysTotalMealCount,
       totalMealByThisMonth,
       totalWalletBalance,
+      totalExpense,
       totalRemainingWalletBalance: parseFloat(totalRemainingWalletBalance.toFixed(2)),
       mealRate: parseFloat(mealRate.toFixed(2)),
       memberWise
