@@ -26,8 +26,22 @@ const getTodayDateRange = () => {
 
 exports.getSummary = async (req, res) => {
   try {
-    const month = parseInt(req.query.month) || (getBangladeshTime().getMonth() + 1); // 1–12
-    const year = getBangladeshTime().getFullYear();
+    const bdCurrent = getBangladeshTime();
+    const currentMonth = bdCurrent.getMonth() + 1; // 1-12
+    const currentYear = bdCurrent.getFullYear();
+    
+    const month = parseInt(req.query.month) || currentMonth; // 1–12
+    
+    // Calculate the correct year for the requested month
+    let year = currentYear;
+    if (month > currentMonth) {
+      // If requested month is greater than current month, it's from previous year
+      year = currentYear - 1;
+    } else if (month < currentMonth) {
+      // If requested month is less than current month, it's from current year
+      year = currentYear;
+    }
+    // If month equals current month, use current year
 
     // Monthly date range (1st day to last day of month)
     const start = new Date(year, month - 1, 1);
