@@ -43,6 +43,27 @@ exports.getSummary = async (req, res) => {
     ]);
     const todaysTotalMealCount = todayMealsAgg[0]?.totalMeals || 0;
 
+    // Today's member-wise meal breakdown
+    const todayMemberMeals = await Meal.aggregate([
+      { $match: { date: { $gte: utcTodayStart, $lte: utcTodayEnd } } },
+      { $group: { _id: '$member', totalMeals: { $sum: '$meals' } } }
+    ]);
+
+    // Get member details for today's meals
+    const todayMealMap = {};
+    todayMemberMeals.forEach(entry => todayMealMap[entry._id.toString()] = entry.totalMeals);
+
+    // Create today's meals breakdown string
+    const todayMealsBreakdown = [];
+    for (const member of members) {
+      const memberId = member._id.toString();
+      const todayMeals = todayMealMap[memberId] || 0;
+      if (todayMeals > 0) {
+        todayMealsBreakdown.push(`${member.name}: ${todayMeals}`);
+      }
+    }
+    const todayMealsBreakDownByMembers = todayMealsBreakdown.join(', ');
+
     // Monthly meal count
     const monthMealsAgg = await Meal.aggregate([
       { $match: { date: { $gte: start, $lte: end } } },
@@ -113,6 +134,7 @@ exports.getSummary = async (req, res) => {
       todayDate,
       todayTime,
       todaysTotalMealCount,
+      todayMealsBreakDownByMembers,
       totalMealByThisMonth,
       totalWalletBalance,
       totalExpense,
