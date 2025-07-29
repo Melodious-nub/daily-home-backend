@@ -43,6 +43,9 @@ exports.getSummary = async (req, res) => {
     ]);
     const todaysTotalMealCount = todayMealsAgg[0]?.totalMeals || 0;
 
+    // Get all members first (needed for today's breakdown)
+    const members = await Member.find().populate('room');
+
     // Today's member-wise meal breakdown
     const todayMemberMeals = await Meal.aggregate([
       { $match: { date: { $gte: utcTodayStart, $lte: utcTodayEnd } } },
@@ -103,8 +106,6 @@ exports.getSummary = async (req, res) => {
     ]);
     const walletMap = {};
     memberWallets.forEach(entry => walletMap[entry._id.toString()] = entry.totalWallet);
-
-    const members = await Member.find().populate('room');
 
     const memberWise = members.map(m => {
       const id = m._id.toString();
