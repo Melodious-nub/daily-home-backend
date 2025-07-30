@@ -1,47 +1,207 @@
-[HOME MANAGEMENT APP PLAN]
+[HOMEDAILY MESS MANAGEMENT APP - COMPLETE REFERENCE]
 
-Purpose:
-Build a full-stack app to manage house rent and daily meal cost sharing among members,
-using Angular (frontend), Express (backend), and MongoDB (database), all served locally with global access via ngrok.
+PROJECT OVERVIEW:
+HomeDaily is a comprehensive mess (shared accommodation) management system with user authentication, 
+mess management, financial tracking, and reporting capabilities.
 
-Features Overview:
+CURRENT VERSION: 2.0.0 (User Management System)
 
-1. House Member Management:
-   - Add/Edit/Delete members
-   - Assign each member to a room
-
-2. House Setup:
-   - Define rooms (e.g., Room A, Room B)
-   - Set rent percentage per room (e.g., Room A = 60%, Room B = 40%)
-   - Divide total house rent accordingly
-   - If multiple people in a room, rent is shared equally within that room
-
-3. Meal Wallet & Costing:
-   - Members can add money to their meal wallet (wallet history saved)
-   - Admin inputs daily bazar cost (date, description, amount)
-   - Admin inputs how many meals each person ate per day
-   - Calculate total meals, meal rate (total bazar cost / total meals)
-   - Deduct cost from each member’s wallet based on meals eaten
-
-4. Reporting:
-   - Show current wallet balance of each member
-   - Monthly or daily meal report
-   - House rent report per person
-
-5. Data Access & Hosting:
-   - Backend (Express + MongoDB) runs on local PC (port 5000)
-   - Frontend (Angular) runs on local PC (port 4200)
-   - ngrok used to expose frontend globally for remote access
-
-Optional Features (Later):
-   - Authentication (password-based or PIN for admin access)
-   - PDF report generation
-   - Monthly data archiving or reset
-   - Export/Import system data as JSON for backup
-
-Tools & Technologies:
-- Frontend: Angular + Angular Material + ngx-charts (optional)
+TECH STACK:
 - Backend: Node.js + Express
-- Database: MongoDB (local instance)
-- Communication: REST API (JSON)
-- Exposure: ngrok (for public URL)
+- Database: MongoDB (Mongoose ODM)
+- Authentication: JWT (unlimited expiry)
+- Email: Nodemailer (Gmail SMTP)
+- Documentation: Swagger/OpenAPI 3.0
+- Password Hashing: bcryptjs
+
+CORE FEATURES IMPLEMENTED:
+
+1. USER AUTHENTICATION SYSTEM:
+   - User registration with email verification
+   - 4-digit OTP with 3-minute expiry
+   - JWT tokens with unlimited expiry (no auto-logout)
+   - Password hashing with bcrypt
+   - Email verification required for login
+   - Unverified users can re-register (old account replaced)
+
+2. MESS MANAGEMENT SYSTEM:
+   - Create mess with name and address
+   - Unique 6-digit identifier codes for each mess
+   - Join mess using identifier codes
+   - Leave mess functionality
+   - Mess admin privileges
+   - One user per mess (can't join multiple)
+
+3. FINANCIAL MANAGEMENT:
+   - Wallet system for each user
+   - Deposit money with transaction history
+   - Bazar (grocery) expense tracking
+   - Meal counting and cost calculation
+   - Automatic meal rate calculation
+   - User-wise financial summaries
+
+4. REPORTING SYSTEM:
+   - Daily meal summaries
+   - Monthly financial reports
+   - User-wise expense breakdown
+   - Bangladesh timezone support
+   - Real-time calculations
+
+DATABASE MODELS:
+
+1. User Model:
+   - email (unique, required)
+   - password (hashed, min 6 chars)
+   - fullName (required)
+   - isEmailVerified (boolean)
+   - otp (code, expiresAt)
+   - currentMess (ObjectId ref)
+   - isMessAdmin (boolean)
+   - timestamps
+
+2. Mess Model:
+   - name (required)
+   - address (required)
+   - identifierCode (unique 6-digit)
+   - admin (User ref)
+   - members (array with user, joinedAt, isActive)
+   - isActive (boolean)
+   - timestamps
+
+3. Wallet Model:
+   - user (User ref)
+   - mess (Mess ref)
+   - amount (number)
+   - type (deposit/withdrawal/meal_deduction)
+   - description (string)
+   - date (timestamp)
+
+4. Bazar Model:
+   - date (required)
+   - cost (number)
+   - description (string)
+   - mess (Mess ref)
+   - addedBy (User ref)
+   - timestamps
+
+5. Meal Model:
+   - user (User ref)
+   - mess (Mess ref)
+   - date (required)
+   - meals (number)
+   - addedBy (User ref)
+   - timestamps
+
+6. Member Model (Legacy - for backward compatibility):
+   - user (User ref)
+   - mess (Mess ref)
+   - name (string)
+   - picture (string)
+   - isActive (boolean)
+   - timestamps
+
+API ENDPOINTS:
+
+AUTHENTICATION:
+- POST /api/auth/signup - Register user (replaces unverified accounts)
+- POST /api/auth/verify-otp - Verify email with OTP
+- POST /api/auth/resend-otp - Resend OTP
+- POST /api/auth/login - User login (unlimited token)
+- GET /api/auth/me - Get user profile
+
+MESS MANAGEMENT:
+- POST /api/mess - Create new mess
+- GET /api/mess/search/:code - Search mess by code
+- POST /api/mess/join - Join mess
+- POST /api/mess/leave - Leave mess
+- GET /api/mess - Get mess details
+- DELETE /api/mess/members/:memberId - Remove member (admin only)
+
+FINANCIAL MANAGEMENT:
+- GET /api/wallets - Get user wallet transactions
+- POST /api/wallets - Add money to wallet
+- GET /api/wallets/summary - Get mess wallet summary (admin)
+- DELETE /api/wallets/:id - Delete transaction (admin)
+
+BAZAR MANAGEMENT:
+- GET /api/bazars - Get mess bazar entries
+- POST /api/bazars - Add bazar entry
+- DELETE /api/bazars/:id - Delete bazar entry
+
+MEAL MANAGEMENT:
+- GET /api/meals - Get mess meals
+- POST /api/meals - Add meal entry
+- POST /api/meals/bulk - Add multiple meals (admin)
+- DELETE /api/meals/:id - Delete meal entry
+
+REPORTS:
+- GET /api/summary - Get monthly summary report
+
+SECURITY FEATURES:
+- JWT authentication with unlimited expiry
+- Password hashing with bcrypt
+- Email verification with OTP
+- Role-based access control (mess admin)
+- Data isolation (users only see their mess data)
+- Input validation and sanitization
+
+ENVIRONMENT VARIABLES REQUIRED:
+- MONGO_URI=mongodb://localhost:27017/homeManagementFinal
+- JWT_SECRET=your_jwt_secret_key
+- EMAIL_USER=your_email@gmail.com
+- EMAIL_PASS=your_app_password
+- PORT=3000
+
+KEY BUSINESS LOGIC:
+
+1. USER REGISTRATION FLOW:
+   - User signs up → OTP sent to email
+   - User verifies OTP → Account activated
+   - User can login → Gets unlimited JWT token
+   - Unverified users can re-register (old account deleted)
+
+2. MESS CREATION FLOW:
+   - User creates mess → Becomes admin
+   - Gets unique 6-digit identifier code
+   - Can invite others using the code
+   - Admin has additional privileges
+
+3. FINANCIAL CALCULATION:
+   - Total bazar cost / Total meals = Meal rate
+   - User cost = User meals × Meal rate
+   - User balance = Deposits - User cost
+
+4. DATA ISOLATION:
+   - All operations scoped to user's current mess
+   - Users can only access their mess data
+   - Admin can manage mess members
+
+MIGRATION FROM V1:
+- Removed room-based system
+- Added user authentication
+- Introduced mess concept
+- Updated all models for user-based system
+- Added comprehensive access control
+
+FUTURE ENHANCEMENTS:
+- Admin transfer functionality
+- Mess statistics and analytics
+- Export/import functionality
+- Push notifications
+- Mobile app integration
+- Advanced reporting features
+
+DEPLOYMENT NOTES:
+- Database: MongoDB (local or cloud)
+- Email: Gmail SMTP with App Password
+- Server: Node.js environment
+- Documentation: Swagger UI at /api-docs
+
+TROUBLESHOOTING:
+- Email issues: Check Gmail App Password setup
+- Database issues: Verify MONGO_URI connection
+- JWT issues: Ensure JWT_SECRET is set
+- OTP issues: Check email configuration
+
+This document serves as complete reference for the HomeDaily app. 
+When switching between Cursor accounts, provide this file to understand the current system state.

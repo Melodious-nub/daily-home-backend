@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bazarController = require('../controllers/bazarController');
+const { auth, requireMess } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -8,10 +9,12 @@ const bazarController = require('../controllers/bazarController');
  *   get:
  *     tags:
  *       - Bazars
- *     description: Get all bazar entries with member details
+ *     description: Get all bazar entries for the mess
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of all bazars
+ *         description: List of all bazars for the mess
  *         content:
  *           application/json:
  *             schema:
@@ -23,16 +26,15 @@ const bazarController = require('../controllers/bazarController');
  *                   date: { type: string, format: date }
  *                   cost: { type: number }
  *                   description: { type: string, nullable: true }
- *                   members:
- *                     type: array
- *                     items:
- *                       type: object
- *                       properties:
- *                         _id: { type: string }
- *                         name: { type: string }
- *                         picture: { type: string }
+ *                   mess: { type: string }
+ *                   addedBy:
+ *                     type: object
+ *                     properties:
+ *                       _id: { type: string }
+ *                       fullName: { type: string }
+ *                       email: { type: string }
  */
-router.get('/', bazarController.getBazars);
+router.get('/', auth, requireMess, bazarController.getBazars);
 
 /**
  * @swagger
@@ -40,7 +42,9 @@ router.get('/', bazarController.getBazars);
  *   post:
  *     tags:
  *       - Bazars
- *     description: Add a new bazar entry with multiple members
+ *     description: Add a new bazar entry
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -52,34 +56,13 @@ router.get('/', bazarController.getBazars);
  *               date: { type: string, format: date }
  *               cost: { type: number }
  *               description: { type: string, nullable: true }
- *               members:
- *                 type: array
- *                 items: { type: string }
- *                 description: Array of member IDs
  *     responses:
  *       201:
  *         description: Bazar added successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 _id: { type: string }
- *                 date: { type: string, format: date }
- *                 cost: { type: number }
- *                 description: { type: string }
- *                 members:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       _id: { type: string }
- *                       name: { type: string }
- *                       picture: { type: string }
  *       400:
  *         description: Invalid request
  */
-router.post('/', bazarController.addBazar);
+router.post('/', auth, requireMess, bazarController.addBazar);
 
 /**
  * @swagger
@@ -88,6 +71,8 @@ router.post('/', bazarController.addBazar);
  *     tags:
  *       - Bazars
  *     description: Delete a bazar entry by its ID
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -98,11 +83,11 @@ router.post('/', bazarController.addBazar);
  *     responses:
  *       200:
  *         description: Bazar deleted successfully
+ *       403:
+ *         description: Access denied
  *       404:
  *         description: Bazar not found
- *       500:
- *         description: Server error during deletion
  */
-router.delete('/:id', bazarController.deleteBazar);
+router.delete('/:id', auth, requireMess, bazarController.deleteBazar);
 
 module.exports = router;

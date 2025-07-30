@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mealController = require('../controllers/mealController');
+const { auth, requireMess, requireMessAdmin } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -8,10 +9,12 @@ const mealController = require('../controllers/mealController');
  *   get:
  *     tags:
  *       - Meals
- *     description: Get all meals
+ *     description: Get all meals for the mess
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of all meals
+ *         description: List of all meals for the mess
  *         content:
  *           application/json:
  *             schema:
@@ -21,16 +24,27 @@ const mealController = require('../controllers/mealController');
  *                 properties:
  *                   _id:
  *                     type: string
- *                   member:
+ *                   user:
+ *                     type: object
+ *                     properties:
+ *                       _id: { type: string }
+ *                       fullName: { type: string }
+ *                       email: { type: string }
+ *                   mess:
  *                     type: string
- *                     description: The ID of the member
  *                   date:
  *                     type: string
  *                     format: date
  *                   meals:
  *                     type: number
+ *                   addedBy:
+ *                     type: object
+ *                     properties:
+ *                       _id: { type: string }
+ *                       fullName: { type: string }
+ *                       email: { type: string }
  */
-router.get('/', mealController.getMeals);
+router.get('/', auth, requireMess, mealController.getMeals);
 
 /**
  * @swagger
@@ -38,7 +52,9 @@ router.get('/', mealController.getMeals);
  *   post:
  *     tags:
  *       - Meals
- *     description: Add a new meal entry
+ *     description: Add a new meal entry for yourself
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -46,41 +62,67 @@ router.get('/', mealController.getMeals);
  *           schema:
  *             type: object
  *             required:
- *               - member
+ *               - userId
  *               - date
  *               - meals
  *             properties:
- *               member:
+ *               userId:
  *                 type: string
- *                 description: The ID of the member who ate the meal (ObjectId of 'Member')
+ *                 description: The ID of the user (must be the authenticated user)
  *               date:
  *                 type: string
  *                 format: date
  *               meals:
  *                 type: number
- *                 description: Number of meals consumed by the member on the given date
+ *                 description: Number of meals consumed on the given date
  *     responses:
  *       201:
  *         description: Meal added successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 _id:
- *                   type: string
- *                 member:
- *                   type: string
- *                   description: The ID of the member
- *                 date:
- *                   type: string
- *                   format: date
- *                 meals:
- *                   type: number
  *       400:
  *         description: Bad request, missing required fields or invalid data
  */
-router.post('/', mealController.addMeal);
+router.post('/', auth, requireMess, mealController.addMeal);
+
+/**
+ * @swagger
+ * /api/meals/bulk:
+ *   post:
+ *     tags:
+ *       - Meals
+ *     description: Add multiple meals for a date (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - date
+ *               - meals
+ *             properties:
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               meals:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                     meals:
+ *                       type: number
+ *     responses:
+ *       201:
+ *         description: Meals added successfully
+ *       403:
+ *         description: Access denied, mess admin required
+ *       400:
+ *         description: Bad request, missing required fields or invalid data
+ */
+router.post('/bulk', auth, requireMess, requireMessAdmin, mealController.addBulkMeals);
 
 /**
  * @swagger
@@ -89,6 +131,8 @@ router.post('/', mealController.addMeal);
  *     tags:
  *       - Meals
  *     description: Delete a meal entry by its ID
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -99,11 +143,11 @@ router.post('/', mealController.addMeal);
  *     responses:
  *       200:
  *         description: Meal deleted successfully
+ *       403:
+ *         description: Access denied
  *       404:
  *         description: Meal not found
- *       500:
- *         description: Server error during deletion
  */
-router.delete('/:id', mealController.deleteMeal);
+router.delete('/:id', auth, requireMess, mealController.deleteMeal);
 
 module.exports = router;

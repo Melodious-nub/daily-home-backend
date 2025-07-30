@@ -25,15 +25,15 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
-app.use('/api/members', require('./routes/memberRoutes'));
-app.use('/api/rooms', require('./routes/roomRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/mess', require('./routes/messRoutes'));
 app.use('/api/wallets', require('./routes/walletRoutes'));
 app.use('/api/bazars', require('./routes/bazarRoutes'));
 app.use('/api/meals', require('./routes/mealRoutes'));
 app.use('/api/summary', require('./routes/summaryRoutes'));
 
 // Root
-app.get('/', (req, res) => res.send('Home Management API Running'));
+app.get('/', (req, res) => res.send('HomeDaily API Running'));
 
 // Start server
 const PORT = process.env.PORT || 3000;

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const summaryController = require('../controllers/summaryController');
+const { auth, requireMess } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -11,7 +12,9 @@ const summaryController = require('../controllers/summaryController');
  *     summary: Get monthly summary report
  *     description: >
  *       Returns financial and meal summary for the current month or a selected month.
- *       It includes today's total meal count, monthly stats, financials, meal rate, and per-member breakdown.
+ *       It includes today's total meal count, monthly stats, financials, meal rate, and per-user breakdown.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: month
@@ -42,9 +45,9 @@ const summaryController = require('../controllers/summaryController');
  *                 todaysTotalMealCount:
  *                   type: number
  *                   description: Total meals today (Bangladesh time, 12AM-11:59PM)
- *                 todayMealsBreakDownByMembers:
+ *                 todayMealsBreakDownByUsers:
  *                   type: string
- *                   description: Comma-separated breakdown of today's meals by member (e.g. "John 2, Jane 1, Bob 3")
+ *                   description: Comma-separated breakdown of today's meals by user (e.g. "John 2, Jane 1, Bob 3")
  *                 totalMealByThisMonth:
  *                   type: number
  *                   description: Total number of meals for this month
@@ -60,38 +63,38 @@ const summaryController = require('../controllers/summaryController');
  *                 mealRate:
  *                   type: number
  *                   description: Cost per meal this month (totalExpense / totalMealByThisMonth)
- *                 memberWise:
+ *                 userWise:
  *                   type: array
- *                   description: Member-wise meal and financial summary
+ *                   description: User-wise meal and financial summary
  *                   items:
  *                     type: object
  *                     properties:
  *                       _id:
  *                         type: string
- *                         description: Member ID
+ *                         description: User ID
  *                       name:
  *                         type: string
- *                       picture:
+ *                         description: User's full name
+ *                       email:
  *                         type: string
- *                         description: Member profile image URL
- *                       room:
- *                         type: string
- *                         description: Member's room name
+ *                         description: User's email
  *                       totalMeal:
  *                         type: number
- *                         description: Total meals for this member this month
+ *                         description: Total meals for this user this month
  *                       totalWallet:
  *                         type: number
- *                         description: Total wallet added by this member this month
+ *                         description: Total wallet added by this user this month
  *                       totalCost:
  *                         type: number
- *                         description: Total meal cost for this member (mealRate * totalMeal)
+ *                         description: Total meal cost for this user (mealRate * totalMeal)
  *                       remaining:
  *                         type: number
  *                         description: Wallet remaining after deducting meal cost
+ *       400:
+ *         description: User is not part of any mess
  *       500:
  *         description: Failed to generate summary
  */
-router.get('/', summaryController.getSummary);
+router.get('/', auth, requireMess, summaryController.getSummary);
 
 module.exports = router;
