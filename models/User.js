@@ -37,6 +37,11 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  // Password reset OTP and expiry
+  resetPassword: {
+    code: String,
+    expiresAt: Date,
+  },
 }, {
   timestamps: true
 });

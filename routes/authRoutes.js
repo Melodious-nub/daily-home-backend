@@ -7,6 +7,8 @@ const {
   resendOTP,
   login,
   getMe,
+  requestPasswordReset,
+  resetPassword,
 } = require('../controllers/authController');
 
 /**
@@ -211,5 +213,108 @@ router.post('/login', login);
  *         description: Unauthorized - Invalid token
  */
 router.get('/me', auth, getMe);
+
+/**
+ * @swagger
+ * /api/auth/request-password-reset:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Request password reset (send OTP)
+ *     description: Send a one-time password (OTP) to the user's email for password reset.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User's email address
+ *     responses:
+ *       200:
+ *         description: OTP has been sent to your email.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: OTP has been sent to your email.
+ *       400:
+ *         description: Email is required.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Email is required.
+ *       404:
+ *         description: User with this email not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User with this email not found.
+ *       500:
+ *         description: Server error
+ */
+router.post('/request-password-reset', requestPasswordReset);
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Reset password using OTP
+ *     description: Reset the user's password using the OTP sent to their email.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *               - newPassword
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User's email address
+ *               otp:
+ *                 type: string
+ *                 description: The OTP sent to the user's email
+ *               newPassword:
+ *                 type: string
+ *                 description: The new password (min 6 characters)
+ *     responses:
+ *       200:
+ *         description: Password reset successful.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid or expired OTP, missing fields, or password too short.
+ *       500:
+ *         description: Server error
+ */
+router.post('/reset-password', resetPassword);
 
 module.exports = router; 

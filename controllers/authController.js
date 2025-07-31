@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { sendOTPEmail } = require('../utils/emailService');
+const { sendOTPEmail, sendPasswordResetEmail } = require('../utils/emailService');
 
 // Generate JWT token
 const generateToken = (userId) => {
@@ -194,10 +194,73 @@ const getMe = async (req, res) => {
   }
 };
 
+// @desc    Request password reset (send OTP)
+// @route   POST /api/auth/request-password-reset
+// @access  Public
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User with this email not found.' });
+    }
+    // Generate 4-digit OTP
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    user.resetPassword = {
+      code: otp,
+      expiresAt: new Date(Date.now() + 3 * 60 * 1000), // 3 minutes
+    };
+    await user.save();
+    // Send OTP email (reuse sendOTPEmail, pass fullName if available)
+    await sendPasswordResetEmail(user.email, otp, user.fullName || '');
+    res.json({ message: 'OTP has been sent to your email.' });
+  } catch (error) {
+    console.error('Request password reset error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Reset password using OTP
+// @route   POST /api/auth/reset-password
+// @access  Public
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: 'Email, OTP, and new password are required.' });
+    }
+    const user = await User.findOne({ email });
+    if (!user || !user.resetPassword || !user.resetPassword.code || !user.resetPassword.expiresAt) {
+      return res.status(400).json({ message: 'Invalid or expired OTP.' });
+    }
+    if (user.resetPassword.expiresAt < new Date()) {
+      return res.status(400).json({ message: 'OTP expired.' });
+    }
+    if (user.resetPassword.code !== otp) {
+      return res.status(400).json({ message: 'Invalid OTP.' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+    }
+    user.password = newPassword;
+    user.resetPassword = undefined;
+    await user.save();
+    res.json({ message: 'Password reset successful.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   signup,
   verifyOTP,
   resendOTP,
   login,
   getMe,
+  requestPasswordReset,
+  resetPassword,
 }; 
