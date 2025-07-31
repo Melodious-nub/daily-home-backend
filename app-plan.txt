@@ -1,7 +1,7 @@
-[HOMEDAILY MESS MANAGEMENT APP - COMPLETE REFERENCE]
+[DailyHome MESS MANAGEMENT APP - COMPLETE REFERENCE]
 
 PROJECT OVERVIEW:
-HomeDaily is a comprehensive mess (shared accommodation) management system with user authentication, 
+DailyHome is a comprehensive mess (shared accommodation) management system with user authentication, 
 mess management, financial tracking, and reporting capabilities.
 
 CURRENT VERSION: 2.0.0 (User Management System)
@@ -203,5 +203,5 @@ TROUBLESHOOTING:
 - JWT issues: Ensure JWT_SECRET is set
 - OTP issues: Check email configuration
 
-This document serves as complete reference for the HomeDaily app. 
+This document serves as complete reference for the DailyHome app. 
 When switching between Cursor accounts, provide this file to understand the current system state.

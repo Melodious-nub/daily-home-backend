@@ -1,6 +1,6 @@
 {
-  "name": "home-mnagement-backend",
-  "version": "1.0.0",
+  "name": "home-management-backend",
+  "version": "2.0.0",
   "description": "home management app",
   "main": "app.js",
   "scripts": {

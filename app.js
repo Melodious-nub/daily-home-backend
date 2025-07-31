@@ -33,7 +33,7 @@ app.use('/api/meals', require('./routes/mealRoutes'));
 app.use('/api/summary', require('./routes/summaryRoutes'));
 
 // Root
-app.get('/', (req, res) => res.send('HomeDaily API Running'));
+app.get('/', (req, res) => res.send('DailyHome API Running'));
 
 // Start server
 const PORT = process.env.PORT || 3000;

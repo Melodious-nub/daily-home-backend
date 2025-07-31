@@ -4,9 +4,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'HomeDaily API',
+      title: 'DailyHome API',
       version: '2.0.0',
-      description: 'API documentation for the HomeDaily Mess Management System',
+      description: 'API documentation for the DailyHome Mess Management System',
     },
     servers: [
       {

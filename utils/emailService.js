@@ -14,10 +14,10 @@ const sendOTPEmail = async (email, otp, fullName) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'HomeDaily - Email Verification OTP',
+    subject: 'DailyHome - Email Verification OTP',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">HomeDaily Email Verification</h2>
+        <h2 style="color: #333;">DailyHome Email Verification</h2>
         <p>Hello ${fullName},</p>
         <p>Your verification code is:</p>
         <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
@@ -25,7 +25,7 @@ const sendOTPEmail = async (email, otp, fullName) => {
         </div>
         <p>This code will expire in 3 minutes.</p>
         <p>If you didn't request this code, please ignore this email.</p>
-        <p>Best regards,<br>HomeDaily Team</p>
+        <p>Best regards,<br>DailyHome Team</p>
       </div>
     `,
   };

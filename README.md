@@ -1,4 +1,4 @@
-# HomeDaily - Mess Management System
+# DailyHome - Mess Management System
 
 A comprehensive backend API for managing mess (shared accommodation) expenses, meals, and member finances.
 
@@ -71,7 +71,7 @@ Create a `.env` file in the root directory with the following variables:
 
 ```env
 # Database
-MONGO_URI=mongodb://localhost:27017/homedaily
+MONGO_URI=mongodb://localhost:27017/DailyHome
 
 # JWT Secret
 JWT_SECRET=your_jwt_secret_key_here
