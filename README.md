@@ -5,7 +5,7 @@ A comprehensive backend API for managing mess (shared accommodation) expenses, m
 ## Author
 
 **Shawon Talukder**  
-Software Engineer (Green Delta Insurance PLC)
+Software Engineer (Green Delta Insurance PLC)  
 📧 [shawon.taluckder2@gmail.com](mailto:shawon.taluckder2@gmail.com)
 
 ---
