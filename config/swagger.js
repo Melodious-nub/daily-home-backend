@@ -10,8 +10,8 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
-        // url: 'https://daily-home-backend-dev.onrender.com'
+        // url: 'http://localhost:3000',
+        url: 'https://daily-home-backend-dev.onrender.com'
       },
     ],
     components: {
