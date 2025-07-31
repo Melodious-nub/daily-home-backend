@@ -2,6 +2,14 @@
 
 A comprehensive backend API for managing mess (shared accommodation) expenses, meals, and member finances.
 
+## Author
+
+**Shawon Talukder**  
+Software Engineer  
+📧 [shawon.taluckder2@gmail.com](mailto:shawon.taluckder2@gmail.com)
+
+---
+
 ## Features
 
 ### User Management
@@ -150,6 +158,85 @@ The system has been completely redesigned from the previous room-based system to
 - Introduced mess concept
 - Updated all models to work with users and messes
 - Added comprehensive access control
+
+## Contributing
+
+We welcome contributions from the community! If you'd like to contribute to DailyHome, please follow these guidelines:
+
+### How to Contribute
+
+1. **Fork the Repository**
+   - Fork this repository to your GitHub account
+   - Clone your forked repository locally
+
+2. **Create a Feature Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+3. **Make Your Changes**
+   - Write clean, well-documented code
+   - Follow the existing code style and conventions
+   - Add tests for new features
+   - Update documentation if needed
+
+4. **Test Your Changes**
+   - Ensure all existing tests pass
+   - Add new tests for your features
+   - Test the API endpoints manually
+
+5. **Commit Your Changes**
+   ```bash
+   git add .
+   git commit -m "feat: add your feature description"
+   ```
+
+6. **Push and Create Pull Request**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+   - Create a Pull Request with a clear description
+   - Reference any related issues
+
+### Development Setup
+
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Environment Setup**
+   - Copy `.env.example` to `.env` (if available)
+   - Configure your environment variables
+
+3. **Database Setup**
+   - Ensure MongoDB is running
+   - Update `MONGO_URI` in your `.env` file
+
+4. **Run Development Server**
+   ```bash
+   npm run dev
+   ```
+
+### Code Style Guidelines
+
+- Use meaningful variable and function names
+- Add comments for complex logic
+- Follow ESLint rules (if configured)
+- Use consistent indentation (2 spaces)
+- Write descriptive commit messages
+
+### Reporting Issues
+
+- Use the GitHub Issues page
+- Provide detailed bug reports
+- Include steps to reproduce
+- Mention your environment details
+
+### Contact
+
+For questions about contributing, feel free to reach out to:
+- **Shawon Talukder**: [shawon.taluckder2@gmail.com](mailto:shawon.taluckder2@gmail.com)
 
 ## License
 
