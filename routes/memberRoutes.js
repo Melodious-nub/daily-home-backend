@@ -8,10 +8,10 @@ const memberController = require('../controllers/memberController');
  *   get:
  *     tags:
  *       - Members
- *     description: Get all members
+ *     description: Get all members with their total meals and wallet amount given in the current month, including last wallet given date
  *     responses:
  *       200:
- *         description: List of all members
+ *         description: List of all members with meal and wallet stats
  *         content:
  *           application/json:
  *             schema:
@@ -24,8 +24,26 @@ const memberController = require('../controllers/memberController');
  *                   name:
  *                     type: string
  *                   room:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                   picture:
  *                     type: string
- *                     description: The ID of the room that the member belongs to
+ *                     description: URL or base64 of the member's profile picture
+ *                   totalMeals:
+ *                     type: integer
+ *                     description: Total meals taken by the member in the current month
+ *                   totalWalletGiven:
+ *                     type: number
+ *                     description: Total wallet amount given by the member in the current month
+ *                   lastWalletGivenDate:
+ *                     type: string
+ *                     format: date-time
+ *                     nullable: true
+ *                     description: The date of the last wallet amount given in the current month; null if none
  */
 router.get('/', memberController.getMembers);
 
@@ -51,6 +69,9 @@ router.get('/', memberController.getMembers);
  *               room:
  *                 type: string
  *                 description: The ID of the room the member will be assigned to (ObjectId of 'Room')
+ *               picture:
+ *                 type: string
+ *                 description: Optional picture URL or base64 string
  *     responses:
  *       201:
  *         description: Member created successfully
@@ -64,6 +85,8 @@ router.get('/', memberController.getMembers);
  *                 name:
  *                   type: string
  *                 room:
+ *                   type: string
+ *                 picture:
  *                   type: string
  *       400:
  *         description: Bad request, missing required fields or invalid data

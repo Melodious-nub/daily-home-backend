@@ -4,19 +4,33 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Home Management API',
-      version: '1.0.0',
-      description: 'API documentation for the Home Management System',
+      title: 'DailyHome API',
+      version: '2.0.0',
+      description: 'API documentation for the DailyHome Mess Management System',
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        // url: 'http://localhost:3000',
+        url: 'https://daily-home-backend-dev.onrender.com'
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
     tags: [
       {
-        name: 'Members',
-        description: 'API for managing members'
+        name: 'Authentication',
+        description: 'API for user authentication and management'
+      },
+      {
+        name: 'Mess',
+        description: 'API for managing messes'
       },
       {
         name: 'Bazars',

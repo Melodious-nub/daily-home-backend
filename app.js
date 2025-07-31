@@ -5,7 +5,7 @@ const connectDB = require('./config/db');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 
-// Load env
+// Load environment variables
 dotenv.config();
 
 // Connect MongoDB
@@ -13,21 +13,28 @@ connectDB();
 
 // Init app
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-// Swagger route
+// Middlewares
+app.use(cors());
+
+// ✅ Set body size limits only once (this is important)
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
-app.use('/api/members', require('./routes/memberRoutes'));
-app.use('/api/rooms', require('./routes/roomRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/mess', require('./routes/messRoutes'));
 app.use('/api/wallets', require('./routes/walletRoutes'));
 app.use('/api/bazars', require('./routes/bazarRoutes'));
 app.use('/api/meals', require('./routes/mealRoutes'));
 app.use('/api/summary', require('./routes/summaryRoutes'));
 
-app.get('/', (req, res) => res.send('Home Management API Running'));
+// Root
+app.get('/', (req, res) => res.send('DailyHome API Running'));
 
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

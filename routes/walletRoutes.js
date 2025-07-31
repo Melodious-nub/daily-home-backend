@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const walletController = require('../controllers/walletController');
+const { auth, requireMess, requireMessAdmin } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -8,10 +9,12 @@ const walletController = require('../controllers/walletController');
  *   get:
  *     tags:
  *       - Wallets
- *     description: Get all wallets
+ *     description: Get user's wallet transactions
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of all wallet entries
+ *         description: List of user's wallet transactions
  *         content:
  *           application/json:
  *             schema:
@@ -21,16 +24,22 @@ const walletController = require('../controllers/walletController');
  *                 properties:
  *                   _id:
  *                     type: string
- *                   member:
+ *                   user:
  *                     type: string
- *                     description: The ID of the member associated with the wallet
+ *                   mess:
+ *                     type: string
  *                   amount:
  *                     type: number
+ *                   type:
+ *                     type: string
+ *                     enum: [deposit, withdrawal, meal_deduction]
+ *                   description:
+ *                     type: string
  *                   date:
  *                     type: string
  *                     format: date-time
  */
-router.get('/', walletController.getWallets);
+router.get('/', auth, requireMess, walletController.getWallets);
 
 /**
  * @swagger
@@ -38,7 +47,9 @@ router.get('/', walletController.getWallets);
  *   post:
  *     tags:
  *       - Wallets
- *     description: Add money to a member's wallet
+ *     description: Add money to user's wallet
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -46,36 +57,38 @@ router.get('/', walletController.getWallets);
  *           schema:
  *             type: object
  *             required:
- *               - member
  *               - amount
  *             properties:
- *               member:
- *                 type: string
- *                 description: The ID of the member whose wallet is being updated (ObjectId of 'Member')
  *               amount:
  *                 type: number
  *                 description: The amount of money to add to the wallet
+ *               description:
+ *                 type: string
+ *                 description: Optional description for the transaction
  *     responses:
  *       201:
  *         description: Money added successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 _id:
- *                   type: string
- *                 member:
- *                   type: string
- *                 amount:
- *                   type: number
- *                 date:
- *                   type: string
- *                   format: date-time
  *       400:
  *         description: Bad request, missing required fields or invalid data
  */
-router.post('/', walletController.addMoney);
+router.post('/', auth, requireMess, walletController.addMoney);
+
+/**
+ * @swagger
+ * /api/wallets/summary:
+ *   get:
+ *     tags:
+ *       - Wallets
+ *     description: Get mess wallet summary (admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Mess wallet summary with user balances
+ *       403:
+ *         description: Access denied, mess admin required
+ */
+router.get('/summary', auth, requireMess, requireMessAdmin, walletController.getMessWalletSummary);
 
 /**
  * @swagger
@@ -83,22 +96,24 @@ router.post('/', walletController.addMoney);
  *   delete:
  *     tags:
  *       - Wallets
- *     description: Delete a wallet entry by its ID
+ *     description: Delete a wallet transaction (admin only)
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: The ID of the wallet entry to delete
+ *         description: The ID of the wallet transaction to delete
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Wallet deleted successfully
+ *         description: Wallet transaction deleted successfully
+ *       403:
+ *         description: Access denied, mess admin required
  *       404:
- *         description: Wallet not found
- *       500:
- *         description: Server error during deletion
+ *         description: Wallet transaction not found
  */
-router.delete('/:id', walletController.deleteWallet);
+router.delete('/:id', auth, requireMess, requireMessAdmin, walletController.deleteWallet);
 
 module.exports = router;

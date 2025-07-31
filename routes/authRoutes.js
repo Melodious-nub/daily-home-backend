@@ -1,0 +1,215 @@
+const express = require('express');
+const router = express.Router();
+const { auth } = require('../middleware/auth');
+const {
+  signup,
+  verifyOTP,
+  resendOTP,
+  login,
+  getMe,
+} = require('../controllers/authController');
+
+/**
+ * @swagger
+ * /api/auth/signup:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Register a new user
+ *     description: Create a new user account with email verification. If user exists but is unverified, the old account will be replaced.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - fullName
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User's email address
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *                 description: User's password (minimum 6 characters)
+ *               fullName:
+ *                 type: string
+ *                 description: User's full name
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 userId:
+ *                   type: string
+ *       400:
+ *         description: User already exists or invalid data
+ *       500:
+ *         description: Server error
+ */
+router.post('/signup', signup);
+
+/**
+ * @swagger
+ * /api/auth/verify-otp:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Verify email with OTP
+ *     description: Verify user's email address using the OTP sent to their email (OTP expires in 3 minutes)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - otp
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID received from signup
+ *               otp:
+ *                 type: string
+ *                 description: 4-digit OTP code from email
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: Invalid or expired OTP
+ *       404:
+ *         description: User not found
+ */
+router.post('/verify-otp', verifyOTP);
+
+/**
+ * @swagger
+ * /api/auth/resend-otp:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Resend OTP
+ *     description: Resend OTP to user's email address
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: User ID received from signup
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *       400:
+ *         description: Email already verified
+ *       404:
+ *         description: User not found
+ */
+router.post('/resend-otp', resendOTP);
+
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: User login
+ *     description: Authenticate user and return JWT token (no expiry)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User's email address
+ *               password:
+ *                 type: string
+ *                 description: User's password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: Invalid credentials or email not verified
+ */
+router.post('/login', login);
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     tags:
+ *       - Authentication
+ *     summary: Get current user profile
+ *     description: Get authenticated user's profile information
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 fullName:
+ *                   type: string
+ *                 isEmailVerified:
+ *                   type: boolean
+ *                 currentMess:
+ *                   type: object
+ *                 isMessAdmin:
+ *                   type: boolean
+ *       401:
+ *         description: Unauthorized - Invalid token
+ */
+router.get('/me', auth, getMe);
+
+module.exports = router; 

@@ -1,120 +1,190 @@
-const Member = require('../models/Member');
-const Wallet = require('../models/Wallet');
 const Meal = require('../models/Meal');
+const Wallet = require('../models/Wallet');
 const Bazar = require('../models/Bazar');
+const User = require('../models/User');
 
+// Helper function to get Bangladesh time
+const getBangladeshTime = () => {
+  const now = new Date();
+  // Bangladesh is UTC+6
+  const bdTime = new Date(now.getTime() + (6 * 60 * 60 * 1000));
+  return bdTime;
+};
+
+// Helper function to get today's date range in Bangladesh time (12 AM to 11:59 PM)
+const getTodayDateRange = () => {
+  const bdNow = getBangladeshTime();
+  const todayStart = new Date(bdNow.getFullYear(), bdNow.getMonth(), bdNow.getDate());
+  const todayEnd = new Date(bdNow.getFullYear(), bdNow.getMonth(), bdNow.getDate(), 23, 59, 59, 999);
+  
+  // Convert back to UTC for database queries
+  const utcTodayStart = new Date(todayStart.getTime() - (6 * 60 * 60 * 1000));
+  const utcTodayEnd = new Date(todayEnd.getTime() - (6 * 60 * 60 * 1000));
+  
+  return { utcTodayStart, utcTodayEnd, bdNow };
+};
+
+// @desc    Get mess summary
+// @route   GET /api/summary
+// @access  Private
 exports.getSummary = async (req, res) => {
   try {
-    const { from, to } = req.query;
+    const bdCurrent = getBangladeshTime();
+    const currentMonth = bdCurrent.getMonth() + 1; // 1-12
+    const currentYear = bdCurrent.getFullYear();
+    
+    const month = parseInt(req.query.month) || currentMonth; // 1–12
+    
+    // Calculate the correct year for the requested month
+    let year = currentYear;
+    if (month > currentMonth) {
+      // If requested month is greater than current month, it's from previous year
+      year = currentYear - 1;
+    } else if (month < currentMonth) {
+      // If requested month is less than current month, it's from current year
+      year = currentYear;
+    }
+    // If month equals current month, use current year
 
-    const start = new Date(from);
-    const end = new Date(to);
+    // Monthly date range (1st day to last day of month)
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0, 23, 59, 59, 999);
 
-    // 1. Total Bazar Cost
-    const totalBazarCostAgg = await Bazar.aggregate([
-      {
-        $match: {
-          date: { $gte: start, $lte: end }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalCost: { $sum: '$cost' }
-        }
-      }
+    // Get today's date range in Bangladesh time
+    const { utcTodayStart, utcTodayEnd, bdNow } = getTodayDateRange();
+
+    // Today's total meal count (Bangladesh time: 12 AM to 11:59 PM)
+    const todayMealsAgg = await Meal.aggregate([
+      { $match: { 
+        date: { $gte: utcTodayStart, $lte: utcTodayEnd },
+        mess: req.user.currentMess
+      }},
+      { $group: { _id: null, totalMeals: { $sum: '$meals' } } }
     ]);
-    const totalBazarCost = totalBazarCostAgg[0]?.totalCost || 0;
+    const todaysTotalMealCount = todayMealsAgg[0]?.totalMeals || 0;
 
-    // 2. Total Meals
-    const totalMealsAgg = await Meal.aggregate([
-      {
-        $match: {
-          date: { $gte: start, $lte: end }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalMeals: { $sum: '$meals' }
-        }
-      }
+    // Get all active users in the mess
+    const users = await User.find({ currentMess: req.user.currentMess });
+
+    // Today's user-wise meal breakdown
+    const todayUserMeals = await Meal.aggregate([
+      { $match: { 
+        date: { $gte: utcTodayStart, $lte: utcTodayEnd },
+        mess: req.user.currentMess
+      }},
+      { $group: { _id: '$user', totalMeals: { $sum: '$meals' } } }
     ]);
-    const totalMeals = totalMealsAgg[0]?.totalMeals || 0;
 
-    // 3. Meal Rate
-    const mealRate = totalMeals > 0 ? totalBazarCost / totalMeals : 0;
+    // Get user details for today's meals
+    const todayMealMap = {};
+    todayUserMeals.forEach(entry => todayMealMap[entry._id.toString()] = entry.totalMeals);
 
-    // 4. Wallets: Total money per member
-    const wallets = await Wallet.aggregate([
-      {
-        $match: {
-          date: { $gte: start, $lte: end }
-        }
-      },
-      {
-        $group: {
-          _id: '$member',
-          totalAmount: { $sum: '$amount' }
-        }
+    // Create today's meals breakdown string
+    const todayMealsBreakdown = [];
+    for (const user of users) {
+      const userId = user._id.toString();
+      const todayMeals = todayMealMap[userId] || 0;
+      if (todayMeals > 0) {
+        todayMealsBreakdown.push(`${user.fullName}: ${todayMeals}`);
       }
+    }
+    const todayMealsBreakDownByUsers = todayMealsBreakdown.join(', ');
+
+    // Monthly meal count
+    const monthMealsAgg = await Meal.aggregate([
+      { $match: { 
+        date: { $gte: start, $lte: end },
+        mess: req.user.currentMess
+      }},
+      { $group: { _id: null, totalMeals: { $sum: '$meals' } } }
     ]);
-    const walletMap = {};
-    wallets.forEach(w => {
-      walletMap[w._id.toString()] = w.totalAmount;
-    });
+    const totalMealByThisMonth = monthMealsAgg[0]?.totalMeals || 0;
 
-    // 5. Meals: Total meal per member
-    const meals = await Meal.aggregate([
-      {
-        $match: {
-          date: { $gte: start, $lte: end }
-        }
-      },
-      {
-        $group: {
-          _id: '$member',
-          totalMeal: { $sum: '$meals' }
-        }
-      }
+    // Total wallet balance for the month
+    const walletAgg = await Wallet.aggregate([
+      { $match: { 
+        date: { $gte: start, $lte: end },
+        mess: req.user.currentMess,
+        type: 'deposit'
+      }},
+      { $group: { _id: null, totalAmount: { $sum: '$amount' } } }
+    ]);
+    const totalWalletBalance = walletAgg[0]?.totalAmount || 0;
+
+    // Total bazar cost (total expense) for the month
+    const bazarAgg = await Bazar.aggregate([
+      { $match: { 
+        date: { $gte: start, $lte: end },
+        mess: req.user.currentMess
+      }},
+      { $group: { _id: null, totalCost: { $sum: '$cost' } } }
+    ]);
+    const totalExpense = bazarAgg[0]?.totalCost || 0;
+
+    const mealRate = totalMealByThisMonth > 0 ? totalExpense / totalMealByThisMonth : 0;
+    const totalRemainingWalletBalance = totalWalletBalance - totalExpense;
+
+    // User-wise meal aggregation for the month
+    const userMeals = await Meal.aggregate([
+      { $match: { 
+        date: { $gte: start, $lte: end },
+        mess: req.user.currentMess
+      }},
+      { $group: { _id: '$user', totalMeal: { $sum: '$meals' } } }
     ]);
     const mealMap = {};
-    meals.forEach(m => {
-      mealMap[m._id.toString()] = m.totalMeal;
-    });
+    userMeals.forEach(entry => mealMap[entry._id.toString()] = entry.totalMeal);
 
-    // 6. Members
-    const members = await Member.find().populate('room');
+    // User-wise wallet aggregation for the month
+    const userWallets = await Wallet.aggregate([
+      { $match: { 
+        date: { $gte: start, $lte: end },
+        mess: req.user.currentMess,
+        type: 'deposit'
+      }},
+      { $group: { _id: '$user', totalWallet: { $sum: '$amount' } } }
+    ]);
+    const walletMap = {};
+    userWallets.forEach(entry => walletMap[entry._id.toString()] = entry.totalWallet);
 
-    const report = members.map(member => {
-      const memberId = member._id.toString();
-      const totalMeal = mealMap[memberId] || 0;
-      const totalWallet = walletMap[memberId] || 0;
-      const totalCost = totalMeal * mealRate;
-      const remaining = totalWallet - totalCost;
+    const userWise = users.map(u => {
+      const id = u._id.toString();
+      const totalMeal = mealMap[id] || 0;
+      const totalWallet = walletMap[id] || 0;
+      const mealCost = totalMeal * mealRate;
+      const remaining = totalWallet - mealCost;
 
       return {
-        member: member.name,
-        room: member.room.name,
+        _id: u._id,
+        name: u.fullName,
+        email: u.email,
         totalMeal,
         totalWallet,
-        totalCost: parseFloat(totalCost.toFixed(2)),
+        totalCost: parseFloat(mealCost.toFixed(2)),
         remaining: parseFloat(remaining.toFixed(2))
       };
     });
 
+    // Format today's date and time in Bangladesh timezone
+    const todayDate = bdNow.toISOString().split('T')[0]; // YYYY-MM-DD
+    const todayTime = bdNow.toTimeString().split(' ')[0]; // HH:MM:SS
+
     res.json({
-      summary: {
-        from,
-        to,
-        totalBazarCost,
-        totalMeals,
-        mealRate: parseFloat(mealRate.toFixed(2))
-      },
-      report
+      month,
+      todayDate,
+      todayTime,
+      todaysTotalMealCount,
+      todayMealsBreakDownByUsers,
+      totalMealByThisMonth,
+      totalWalletBalance,
+      totalExpense,
+      totalRemainingWalletBalance: parseFloat(totalRemainingWalletBalance.toFixed(2)),
+      mealRate: parseFloat(mealRate.toFixed(2)),
+      userWise
     });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Error generating summary report.' });
+    res.status(500).json({ message: 'Failed to generate monthly summary.' });
   }
 };

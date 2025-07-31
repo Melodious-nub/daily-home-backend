@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const summaryController = require('../controllers/summaryController');
+const { auth, requireMess } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -8,70 +9,92 @@ const summaryController = require('../controllers/summaryController');
  *   get:
  *     tags:
  *       - Summary
- *     description: Get a summary report of the bazar cost, total meals, meal rate, and financial report for each member
+ *     summary: Get monthly summary report
+ *     description: >
+ *       Returns financial and meal summary for the current month or a selected month.
+ *       It includes today's total meal count, monthly stats, financials, meal rate, and per-user breakdown.
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: from
- *         required: true
- *         description: The start date of the report (ISO 8601 format).
+ *         name: month
+ *         required: false
+ *         description: Filter by month (1–12). Defaults to current month if not provided.
  *         schema:
- *           type: string
- *           format: date
- *       - in: query
- *         name: to
- *         required: true
- *         description: The end date of the report (ISO 8601 format).
- *         schema:
- *           type: string
- *           format: date
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
  *     responses:
  *       200:
- *         description: Summary report generated successfully
+ *         description: Summary report for the selected month
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 summary:
- *                   type: object
- *                   properties:
- *                     from:
- *                       type: string
- *                       format: date
- *                     to:
- *                       type: string
- *                       format: date
- *                     totalBazarCost:
- *                       type: number
- *                       description: The total cost of bazar for the given period
- *                     totalMeals:
- *                       type: number
- *                       description: The total number of meals for the given period
- *                     mealRate:
- *                       type: number
- *                       description: The rate of each meal (totalBazarCost / totalMeals)
- *                 report:
+ *                 month:
+ *                   type: integer
+ *                   description: Month number being summarized (1-12)
+ *                 todayDate:
+ *                   type: string
+ *                   format: date
+ *                   description: Today's date in YYYY-MM-DD (Bangladesh time)
+ *                 todayTime:
+ *                   type: string
+ *                   description: Current time (Bangladesh time) in HH:MM:SS
+ *                 todaysTotalMealCount:
+ *                   type: number
+ *                   description: Total meals today (Bangladesh time, 12AM-11:59PM)
+ *                 todayMealsBreakDownByUsers:
+ *                   type: string
+ *                   description: Comma-separated breakdown of today's meals by user (e.g. "John 2, Jane 1, Bob 3")
+ *                 totalMealByThisMonth:
+ *                   type: number
+ *                   description: Total number of meals for this month
+ *                 totalWalletBalance:
+ *                   type: number
+ *                   description: Total money added to wallets this month
+ *                 totalExpense:
+ *                   type: number
+ *                   description: Total bazar cost (expense) this month
+ *                 totalRemainingWalletBalance:
+ *                   type: number
+ *                   description: Total remaining wallet balance (wallet - expense)
+ *                 mealRate:
+ *                   type: number
+ *                   description: Cost per meal this month (totalExpense / totalMealByThisMonth)
+ *                 userWise:
  *                   type: array
+ *                   description: User-wise meal and financial summary
  *                   items:
  *                     type: object
  *                     properties:
- *                       member:
+ *                       _id:
  *                         type: string
- *                       room:
+ *                         description: User ID
+ *                       name:
  *                         type: string
+ *                         description: User's full name
+ *                       email:
+ *                         type: string
+ *                         description: User's email
  *                       totalMeal:
  *                         type: number
+ *                         description: Total meals for this user this month
  *                       totalWallet:
  *                         type: number
+ *                         description: Total wallet added by this user this month
  *                       totalCost:
  *                         type: number
- *                         description: Total cost for the meals consumed by the member
+ *                         description: Total meal cost for this user (mealRate * totalMeal)
  *                       remaining:
  *                         type: number
- *                         description: Remaining balance after meal cost deduction
+ *                         description: Wallet remaining after deducting meal cost
+ *       400:
+ *         description: User is not part of any mess
  *       500:
- *         description: Error generating the summary report
+ *         description: Failed to generate summary
  */
-router.get('/', summaryController.getSummary);
+router.get('/', auth, requireMess, summaryController.getSummary);
 
 module.exports = router;
