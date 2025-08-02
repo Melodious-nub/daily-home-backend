@@ -27,7 +27,8 @@ CORE FEATURES IMPLEMENTED:
 2. MESS MANAGEMENT SYSTEM:
    - Create mess with name and address
    - Unique 6-digit identifier codes for each mess
-   - Join mess using identifier codes
+   - Request to join mess using identifier codes (requires admin approval)
+   - Admin can accept/reject member requests
    - Leave mess functionality
    - Mess admin privileges
    - One user per mess (can't join multiple)
@@ -112,7 +113,10 @@ AUTHENTICATION:
 MESS MANAGEMENT:
 - POST /api/mess - Create new mess
 - GET /api/mess/search/:code - Search mess by code
-- POST /api/mess/join - Join mess
+- POST /api/mess/join - Request to join mess
+- GET /api/mess/pending-requests - Get pending requests (admin only)
+- POST /api/mess/accept-request - Accept member request (admin only)
+- POST /api/mess/reject-request - Reject member request (admin only)
 - POST /api/mess/leave - Leave mess
 - GET /api/mess - Get mess details
 - DELETE /api/mess/members/:memberId - Remove member (admin only)
@@ -165,6 +169,7 @@ KEY BUSINESS LOGIC:
    - Gets unique 6-digit identifier code
    - Can invite others using the code
    - Admin has additional privileges
+   - Users request to join → Admin approves/rejects
 
 3. FINANCIAL CALCULATION:
    - Total bazar cost / Total meals = Meal rate

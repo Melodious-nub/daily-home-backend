@@ -36,6 +36,22 @@ const messSchema = new Schema({
       default: true,
     },
   }],
+  pendingRequests: [{
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    requestedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+  }],
   isActive: {
     type: Boolean,
     default: true,

@@ -20,7 +20,8 @@ Software Engineer (Green Delta Insurance PLC)
 
 ### Mess Management
 - **Create Mess**: Users can create a new mess with name and address
-- **Join Mess**: Users can join existing messes using 6-digit identifier codes
+- **Request to Join**: Users can request to join existing messes using 6-digit identifier codes
+- **Approve/Reject Requests**: Mess admins can approve or reject member join requests
 - **Leave Mess**: Users can leave a mess (admin cannot leave without transferring admin role)
 - **Mess Admin**: Mess creator becomes admin with additional privileges
 - **Unique Identifier**: Each mess gets a unique 6-digit code for easy joining
@@ -48,7 +49,10 @@ Software Engineer (Green Delta Insurance PLC)
 ### Mess Management
 - `POST /api/mess` - Create new mess
 - `GET /api/mess/search/:code` - Search mess by identifier code
-- `POST /api/mess/join` - Join a mess
+- `POST /api/mess/join` - Request to join a mess
+- `GET /api/mess/pending-requests` - Get pending requests (admin only)
+- `POST /api/mess/accept-request` - Accept member request (admin only)
+- `POST /api/mess/reject-request` - Reject member request (admin only)
 - `POST /api/mess/leave` - Leave current mess
 - `GET /api/mess` - Get mess details
 - `DELETE /api/mess/members/:memberId` - Remove member (admin only)

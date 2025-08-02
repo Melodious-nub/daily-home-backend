@@ -8,6 +8,9 @@ const {
   leaveMess,
   getMessDetails,
   removeMember,
+  getPendingRequests,
+  acceptMemberRequest,
+  rejectMemberRequest,
 } = require('../controllers/messController');
 
 /**
@@ -115,8 +118,8 @@ router.get('/search/:code', auth, searchMess);
  *   post:
  *     tags:
  *       - Mess
- *     summary: Join a mess
- *     description: Join an existing mess using its ID
+ *     summary: Request to join a mess
+ *     description: Send a join request to an existing mess using its ID. The request will be pending until approved by the mess admin.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -133,7 +136,7 @@ router.get('/search/:code', auth, searchMess);
  *                 description: ID of the mess to join
  *     responses:
  *       200:
- *         description: Successfully joined the mess
+ *         description: Join request sent successfully
  *         content:
  *           application/json:
  *             schema:
@@ -141,10 +144,20 @@ router.get('/search/:code', auth, searchMess);
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: Join request sent successfully. Please wait for admin approval.
  *                 mess:
  *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     address:
+ *                       type: string
+ *                     identifierCode:
+ *                       type: string
  *       400:
- *         description: User is already part of a mess or already a member
+ *         description: User is already part of a mess, already a member, or already has a pending request
  *       404:
  *         description: Mess not found
  *       401:
@@ -258,5 +271,146 @@ router.get('/', auth, requireMess, getMessDetails);
  *         description: Access denied - Mess admin required
  */
 router.delete('/members/:memberId', auth, requireMess, requireMessAdmin, removeMember);
+
+/**
+ * @swagger
+ * /api/mess/pending-requests:
+ *   get:
+ *     tags:
+ *       - Mess
+ *     summary: Get pending join requests (admin only)
+ *     description: Get all pending member join requests for the mess
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Pending requests retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 pendingRequests:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Request ID
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           fullName:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                       requestedAt:
+ *                         type: string
+ *                         format: date-time
+ *                       status:
+ *                         type: string
+ *                         enum: [pending]
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied - Mess admin required
+ */
+router.get('/pending-requests', auth, requireMess, requireMessAdmin, getPendingRequests);
+
+/**
+ * @swagger
+ * /api/mess/accept-request:
+ *   post:
+ *     tags:
+ *       - Mess
+ *     summary: Accept member request (admin only)
+ *     description: Accept a pending member join request
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - requestId
+ *             properties:
+ *               requestId:
+ *                 type: string
+ *                 description: ID of the pending request to accept
+ *     responses:
+ *       200:
+ *         description: Member request accepted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *       400:
+ *         description: User is already a member or invalid request
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied - Mess admin required
+ *       404:
+ *         description: Request not found or already processed
+ */
+router.post('/accept-request', auth, requireMess, requireMessAdmin, acceptMemberRequest);
+
+/**
+ * @swagger
+ * /api/mess/reject-request:
+ *   post:
+ *     tags:
+ *       - Mess
+ *     summary: Reject member request (admin only)
+ *     description: Reject a pending member join request
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - requestId
+ *             properties:
+ *               requestId:
+ *                 type: string
+ *                 description: ID of the pending request to reject
+ *     responses:
+ *       200:
+ *         description: Member request rejected successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Access denied - Mess admin required
+ *       404:
+ *         description: Request not found or already processed
+ */
+router.post('/reject-request', auth, requireMess, requireMessAdmin, rejectMemberRequest);
 
 module.exports = router; 

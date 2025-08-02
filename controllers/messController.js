@@ -115,37 +115,22 @@ const joinMess = async (req, res) => {
       return res.status(400).json({ message: 'User is already a member of this mess' });
     }
 
-    // Add user to mess members
-    if (existingMember) {
-      existingMember.isActive = true;
-      existingMember.joinedAt = new Date();
-    } else {
-      mess.members.push({ user: userId, joinedAt: new Date(), isActive: true });
+    // Check if user already has a pending request
+    const existingRequest = mess.pendingRequests.find(r => r.user.toString() === userId.toString() && r.status === 'pending');
+    if (existingRequest) {
+      return res.status(400).json({ message: 'You already have a pending request for this mess' });
     }
+
+    // Add pending request
+    mess.pendingRequests.push({ 
+      user: userId, 
+      requestedAt: new Date(), 
+      status: 'pending' 
+    });
     await mess.save();
 
-    // Update user
-    const user = await User.findById(userId);
-    user.currentMess = mess._id;
-    user.isMessAdmin = false;
-    await user.save();
-
-    // Create or update member record
-    let member = await Member.findOne({ user: userId, mess: mess._id });
-    if (member) {
-      member.isActive = true;
-      member.name = user.fullName;
-    } else {
-      member = new Member({
-        user: userId,
-        mess: mess._id,
-        name: user.fullName,
-      });
-    }
-    await member.save();
-
     res.json({
-      message: 'Successfully joined the mess',
+      message: 'Join request sent successfully. Please wait for admin approval.',
       mess: {
         id: mess._id,
         name: mess.name,
@@ -155,6 +140,156 @@ const joinMess = async (req, res) => {
     });
   } catch (error) {
     console.error('Join mess error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Get pending join requests (admin only)
+// @route   GET /api/mess/pending-requests
+// @access  Private (Mess Admin)
+const getPendingRequests = async (req, res) => {
+  try {
+    if (!req.user.isMessAdmin) {
+      return res.status(403).json({ message: 'Access denied. Mess admin required' });
+    }
+
+    const mess = await Mess.findById(req.user.currentMess)
+      .populate('pendingRequests.user', 'fullName email')
+      .populate('admin', 'fullName email');
+
+    if (!mess) {
+      return res.status(404).json({ message: 'Mess not found' });
+    }
+
+    // Filter only pending requests
+    const pendingRequests = mess.pendingRequests.filter(req => req.status === 'pending');
+
+    res.json({
+      pendingRequests: pendingRequests.map(request => ({
+        id: request._id,
+        user: request.user,
+        requestedAt: request.requestedAt,
+        status: request.status,
+      })),
+    });
+  } catch (error) {
+    console.error('Get pending requests error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Accept member request (admin only)
+// @route   POST /api/mess/accept-request
+// @access  Private (Mess Admin)
+const acceptMemberRequest = async (req, res) => {
+  try {
+    const { requestId } = req.body;
+    const userId = req.user._id;
+
+    if (!req.user.isMessAdmin) {
+      return res.status(403).json({ message: 'Access denied. Mess admin required' });
+    }
+
+    const mess = await Mess.findById(req.user.currentMess);
+    if (!mess) {
+      return res.status(404).json({ message: 'Mess not found' });
+    }
+
+    // Find the pending request
+    const request = mess.pendingRequests.find(r => r._id.toString() === requestId && r.status === 'pending');
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found or already processed' });
+    }
+
+    const requestingUserId = request.user;
+
+    // Check if user is already a member
+    const existingMember = mess.members.find(m => m.user.toString() === requestingUserId.toString());
+    if (existingMember && existingMember.isActive) {
+      return res.status(400).json({ message: 'User is already a member of this mess' });
+    }
+
+    // Update request status to approved
+    request.status = 'approved';
+
+    // Add user to mess members
+    if (existingMember) {
+      existingMember.isActive = true;
+      existingMember.joinedAt = new Date();
+    } else {
+      mess.members.push({ user: requestingUserId, joinedAt: new Date(), isActive: true });
+    }
+
+    await mess.save();
+
+    // Update user
+    const user = await User.findById(requestingUserId);
+    if (user) {
+      user.currentMess = mess._id;
+      user.isMessAdmin = false;
+      await user.save();
+    }
+
+    // Create or update member record
+    let member = await Member.findOne({ user: requestingUserId, mess: mess._id });
+    if (member) {
+      member.isActive = true;
+      member.name = user.fullName;
+    } else {
+      member = new Member({
+        user: requestingUserId,
+        mess: mess._id,
+        name: user.fullName,
+      });
+    }
+    await member.save();
+
+    res.json({
+      message: 'Member request accepted successfully',
+      user: {
+        id: requestingUserId,
+        fullName: user.fullName,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error('Accept member request error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Reject member request (admin only)
+// @route   POST /api/mess/reject-request
+// @access  Private (Mess Admin)
+const rejectMemberRequest = async (req, res) => {
+  try {
+    const { requestId } = req.body;
+    const userId = req.user._id;
+
+    if (!req.user.isMessAdmin) {
+      return res.status(403).json({ message: 'Access denied. Mess admin required' });
+    }
+
+    const mess = await Mess.findById(req.user.currentMess);
+    if (!mess) {
+      return res.status(404).json({ message: 'Mess not found' });
+    }
+
+    // Find the pending request
+    const request = mess.pendingRequests.find(r => r._id.toString() === requestId && r.status === 'pending');
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found or already processed' });
+    }
+
+    // Update request status to rejected
+    request.status = 'rejected';
+    await mess.save();
+
+    res.json({
+      message: 'Member request rejected successfully',
+    });
+  } catch (error) {
+    console.error('Reject member request error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -303,4 +438,7 @@ module.exports = {
   leaveMess,
   getMessDetails,
   removeMember,
+  getPendingRequests,
+  acceptMemberRequest,
+  rejectMemberRequest,
 }; 
