@@ -16,16 +16,16 @@ const sendOTPEmail = async (email, otp, fullName) => {
     to: email,
     subject: 'DailyHome - Email Verification OTP',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">DailyHome Email Verification</h2>
-        <p>Hello ${fullName},</p>
-        <p>Your verification code is:</p>
-        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
-          <h1 style="color: #CDEF6C; font-size: 32px; margin: 0; letter-spacing: 5px;">${otp}</h1>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; color: #000000;">
+        <h2 style="color: #000000; margin-bottom: 20px; font-size: 24px;">DailyHome Email Verification</h2>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Hello ${fullName},</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Your verification code is:</p>
+        <div style="background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 25px; text-align: center; margin: 25px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h1 style="color: #000000; font-size: 36px; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
         </div>
-        <p>This code will expire in 3 minutes.</p>
-        <p>If you didn't request this code, please ignore this email.</p>
-        <p>Best regards,<br>DailyHome Team</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">This code will expire in 3 minutes.</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">If you didn't request this code, please ignore this email.</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Best regards,<br>DailyHome Team</p>
       </div>
     `,
   };
@@ -46,16 +46,16 @@ const sendPasswordResetEmail = async (email, otp, fullName) => {
     to: email,
     subject: 'DailyHome - Password Reset Request',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">DailyHome Password Reset</h2>
-        <p>Hello ${fullName || 'User'},</p>
-        <p>We received a request to reset your password. Use the code below to reset it:</p>
-        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
-          <h1 style="color: #CDEF6C; font-size: 32px; margin: 0; letter-spacing: 5px;">${otp}</h1>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; color: #000000;">
+        <h2 style="color: #000000; margin-bottom: 20px; font-size: 24px;">DailyHome Password Reset</h2>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Hello ${fullName || 'User'},</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">We received a request to reset your password. Use the code below to reset it:</p>
+        <div style="background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 25px; text-align: center; margin: 25px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h1 style="color: #000000; font-size: 36px; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
         </div>
-        <p>This code will expire in 3 minutes.</p>
-        <p>If you did not request a password reset, you can safely ignore this email.</p>
-        <p>Best regards,<br>DailyHome Team</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">This code will expire in 3 minutes.</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">If you did not request a password reset, you can safely ignore this email.</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Best regards,<br>DailyHome Team</p>
       </div>
     `,
   };
@@ -76,16 +76,16 @@ const sendSignupVerificationEmail = async (email, otp, fullName) => {
     to: email,
     subject: 'DailyHome - Complete Your Signup (Email Verification)',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">Welcome to DailyHome!</h2>
-        <p>Hello ${fullName || 'User'},</p>
-        <p>Thank you for signing up. To complete your registration, please verify your email address using the code below:</p>
-        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
-          <h1 style="color: #CDEF6C; font-size: 32px; margin: 0; letter-spacing: 5px;">${otp}</h1>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; color: #000000;">
+        <h2 style="color: #000000; margin-bottom: 20px; font-size: 24px;">Welcome to DailyHome!</h2>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Hello ${fullName || 'User'},</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Thank you for signing up. To complete your registration, please verify your email address using the code below:</p>
+        <div style="background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 25px; text-align: center; margin: 25px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h1 style="color: #000000; font-size: 36px; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
         </div>
-        <p>This code will expire in 3 minutes.</p>
-        <p>If you did not sign up for a DailyHome account, you can safely ignore this email.</p>
-        <p>Best regards,<br>DailyHome Team</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">This code will expire in 3 minutes.</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">If you did not sign up for a DailyHome account, you can safely ignore this email.</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Best regards,<br>DailyHome Team</p>
       </div>
     `,
   };
