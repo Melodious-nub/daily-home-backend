@@ -245,6 +245,13 @@ const resetPassword = async (req, res) => {
     if (newPassword.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters.' });
     }
+    
+    // Check if new password is the same as current password
+    const isSamePassword = await user.comparePassword(newPassword);
+    if (isSamePassword) {
+      return res.status(400).json({ message: 'New password cannot be the same as your current password.' });
+    }
+    
     user.password = newPassword;
     user.resetPassword = undefined;
     await user.save();

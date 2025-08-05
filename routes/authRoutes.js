@@ -311,7 +311,15 @@ router.post('/request-password-reset', requestPasswordReset);
  *                 message:
  *                   type: string
  *       400:
- *         description: Invalid or expired OTP, missing fields, or password too short.
+ *         description: Invalid or expired OTP, missing fields, password too short, or new password same as current password.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: New password cannot be the same as your current password.
  *       500:
  *         description: Server error
  */
