@@ -11,6 +11,8 @@ const {
   getPendingRequests,
   acceptMemberRequest,
   rejectMemberRequest,
+  checkRequestStatus,
+  cancelJoinRequest,
 } = require('../controllers/messController');
 
 /**
@@ -412,5 +414,133 @@ router.post('/accept-request', auth, requireMess, requireMessAdmin, acceptMember
  *         description: Request not found or already processed
  */
 router.post('/reject-request', auth, requireMess, requireMessAdmin, rejectMemberRequest);
+
+/**
+ * @swagger
+ * /api/mess/check-request-status:
+ *   get:
+ *     tags:
+ *       - Mess
+ *     summary: Check join request status (real-time)
+ *     description: Check the status of user's join request for real-time updates
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Request status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       enum: [accepted]
+ *                       description: Request was accepted
+ *                     message:
+ *                       type: string
+ *                     mess:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         address:
+ *                           type: string
+ *                         identifierCode:
+ *                           type: string
+ *                         admin:
+ *                           type: object
+ *                 - type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       enum: [pending]
+ *                       description: Request is still pending
+ *                     message:
+ *                       type: string
+ *                     mess:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         address:
+ *                           type: string
+ *                         identifierCode:
+ *                           type: string
+ *                     request:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         requestedAt:
+ *                           type: string
+ *                           format: date-time
+ *                 - type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       enum: [rejected]
+ *                       description: Request was rejected
+ *                     message:
+ *                       type: string
+ *                     mess:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         identifierCode:
+ *                           type: string
+ *                 - type: object
+ *                   properties:
+ *                     status:
+ *                       type: string
+ *                       enum: [none]
+ *                       description: No request found
+ *                     message:
+ *                       type: string
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/check-request-status', auth, checkRequestStatus);
+
+/**
+ * @swagger
+ * /api/mess/cancel-request:
+ *   post:
+ *     tags:
+ *       - Mess
+ *     summary: Cancel join request
+ *     description: Cancel a pending join request
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Join request cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Join request cancelled successfully
+ *                 status:
+ *                   type: string
+ *                   enum: [cancelled]
+ *       400:
+ *         description: User is already a member of a mess
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: No pending request found
+ */
+router.post('/cancel-request', auth, cancelJoinRequest);
 
 module.exports = router; 

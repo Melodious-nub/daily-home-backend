@@ -185,32 +185,62 @@ router.post('/login', login);
  *   get:
  *     tags:
  *       - Authentication
- *     summary: Get current user profile
- *     description: Get authenticated user's profile information
+ *     summary: Get current user profile and state
+ *     description: Get authenticated user's profile information and current state for UI routing. Returns essential state information for frontend navigation.
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User profile retrieved successfully
+ *         description: User profile and state retrieved successfully
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 _id:
- *                   type: string
- *                 email:
- *                   type: string
- *                 fullName:
- *                   type: string
- *                 isEmailVerified:
- *                   type: boolean
- *                 currentMess:
+ *                 user:
  *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *                     isEmailVerified:
+ *                       type: boolean
+ *                 hasMess:
+ *                   type: boolean
+ *                   description: User is a member of a mess
  *                 isMessAdmin:
  *                   type: boolean
+ *                   description: User is the admin of their mess
+ *                 currentMess:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     identifierCode:
+ *                       type: string
+ *                 hasPendingRequest:
+ *                   type: boolean
+ *                   description: User has a pending join request (only if hasMess is false)
+ *                 pendingRequestMess:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     identifierCode:
+ *                       type: string
  *       401:
  *         description: Unauthorized - Invalid token
+ *       404:
+ *         description: User not found
  */
 router.get('/me', auth, getMe);
 

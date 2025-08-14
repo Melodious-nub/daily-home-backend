@@ -5,8 +5,8 @@ const options = {
     openapi: '3.0.0',
     info: {
       title: 'DailyHome API',
-      version: '2.0.0',
-      description: 'API documentation for the DailyHome Mess Management System',
+      version: '2.1.0',
+      description: 'API documentation for the DailyHome Mess Management System with Enhanced User State Management',
     },
     servers: [
       {

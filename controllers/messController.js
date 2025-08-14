@@ -1,6 +1,7 @@
 const Mess = require('../models/Mess');
 const User = require('../models/User');
 const Member = require('../models/Member');
+const { emitJoinRequestUpdate, emitMessUpdate } = require('../utils/socketEmitter');
 
 // @desc    Create a new mess
 // @route   POST /api/mess
@@ -42,6 +43,13 @@ const createMess = async (req, res) => {
       name: user.fullName,
     });
     await member.save();
+
+    // Emit real-time update to user
+    emitMessUpdate(mess._id, 'mess-created', {
+      messId: mess._id,
+      name: mess.name,
+      identifierCode: mess.identifierCode
+    });
 
     res.status(201).json({
       message: 'Mess created successfully',
@@ -128,6 +136,21 @@ const joinMess = async (req, res) => {
       status: 'pending' 
     });
     await mess.save();
+
+    // Emit real-time update to mess admin
+    emitMessUpdate(mess._id, 'new-join-request', {
+      userId: userId,
+      userName: req.user.fullName,
+      requestedAt: new Date()
+    });
+
+    // Emit initial status to user
+    emitJoinRequestUpdate(userId, 'pending', {
+      id: mess._id,
+      name: mess.name,
+      address: mess.address,
+      identifierCode: mess.identifierCode
+    });
 
     res.json({
       message: 'Join request sent successfully. Please wait for admin approval.',
@@ -244,6 +267,29 @@ const acceptMemberRequest = async (req, res) => {
     }
     await member.save();
 
+    // Emit real-time updates
+    const messData = {
+      id: mess._id,
+      name: mess.name,
+      address: mess.address,
+      identifierCode: mess.identifierCode,
+      admin: {
+        id: mess.admin,
+        fullName: req.user.fullName,
+        email: req.user.email
+      }
+    };
+
+    // Emit to requesting user
+    emitJoinRequestUpdate(requestingUserId, 'accepted', messData);
+
+    // Emit to mess members
+    emitMessUpdate(mess._id, 'member-joined', {
+      userId: requestingUserId,
+      userName: user.fullName,
+      joinedAt: new Date()
+    });
+
     res.json({
       message: 'Member request accepted successfully',
       user: {
@@ -284,6 +330,16 @@ const rejectMemberRequest = async (req, res) => {
     // Update request status to rejected
     request.status = 'rejected';
     await mess.save();
+
+    // Emit real-time update to requesting user
+    const messData = {
+      id: mess._id,
+      name: mess.name,
+      address: mess.address,
+      identifierCode: mess.identifierCode
+    };
+
+    emitJoinRequestUpdate(request.user, 'rejected', messData);
 
     res.json({
       message: 'Member request rejected successfully',
@@ -335,6 +391,13 @@ const leaveMess = async (req, res) => {
       member.isActive = false;
       await member.save();
     }
+
+    // Emit real-time update to mess members
+    emitMessUpdate(mess._id, 'member-left', {
+      userId: userId,
+      userName: user.fullName,
+      leftAt: new Date()
+    });
 
     res.json({ message: 'Successfully left the mess' });
   } catch (error) {
@@ -424,9 +487,167 @@ const removeMember = async (req, res) => {
       await member.save();
     }
 
+    // Emit real-time updates
+    emitMessUpdate(mess._id, 'member-removed', {
+      userId: memberId,
+      userName: user?.fullName,
+      removedAt: new Date()
+    });
+
+    // Emit to removed user
+    emitJoinRequestUpdate(memberId, 'removed', {
+      id: mess._id,
+      name: mess.name,
+      identifierCode: mess.identifierCode
+    });
+
     res.json({ message: 'Member removed successfully' });
   } catch (error) {
     console.error('Remove member error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Check pending request status (for real-time updates)
+// @route   GET /api/mess/check-request-status
+// @access  Private
+const checkRequestStatus = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Check if user has a current mess (request was accepted)
+    if (req.user.currentMess) {
+      const mess = await Mess.findById(req.user.currentMess)
+        .select('name identifierCode address admin')
+        .populate('admin', 'fullName email');
+
+      return res.json({
+        status: 'accepted',
+        message: 'Your join request has been accepted!',
+        mess: {
+          id: mess._id,
+          name: mess.name,
+          address: mess.address,
+          identifierCode: mess.identifierCode,
+          admin: mess.admin,
+        },
+      });
+    }
+
+    // Check for pending request
+    const pendingRequest = await Mess.findOne({
+      'pendingRequests.user': userId,
+      'pendingRequests.status': 'pending'
+    });
+
+    if (pendingRequest && pendingRequest.pendingRequests) {
+      const requestDetails = pendingRequest.pendingRequests.find(
+        req => req.user.toString() === userId.toString() && req.status === 'pending'
+      );
+
+      if (requestDetails) {
+        return res.json({
+          status: 'pending',
+          message: 'Your join request is still pending',
+          mess: {
+            id: pendingRequest._id,
+            name: pendingRequest.name,
+            address: pendingRequest.address,
+            identifierCode: pendingRequest.identifierCode,
+          },
+          request: {
+            id: requestDetails._id,
+            requestedAt: requestDetails.requestedAt,
+          },
+        });
+      }
+    }
+
+    // Check for rejected request
+    const rejectedRequest = await Mess.findOne({
+      'pendingRequests.user': userId,
+      'pendingRequests.status': 'rejected'
+    });
+
+    if (rejectedRequest && rejectedRequest.pendingRequests) {
+      const rejectedRequestDetails = rejectedRequest.pendingRequests.find(
+        req => req.user.toString() === userId.toString() && req.status === 'rejected'
+      );
+
+      if (rejectedRequestDetails) {
+        return res.json({
+          status: 'rejected',
+          message: 'Your join request was rejected',
+          mess: {
+            id: rejectedRequest._id,
+            name: rejectedRequest.name,
+            identifierCode: rejectedRequest.identifierCode,
+          },
+        });
+      }
+    }
+
+    // No request found
+    return res.json({
+      status: 'none',
+      message: 'No pending request found',
+    });
+
+  } catch (error) {
+    console.error('Check request status error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Cancel join request
+// @route   POST /api/mess/cancel-request
+// @access  Private
+const cancelJoinRequest = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Check if user has a current mess
+    if (req.user.currentMess) {
+      return res.status(400).json({ message: 'You are already a member of a mess' });
+    }
+
+    // Find mess with pending request from this user
+    const mess = await Mess.findOne({
+      'pendingRequests.user': userId,
+      'pendingRequests.status': 'pending'
+    });
+
+    if (!mess) {
+      return res.status(404).json({ message: 'No pending request found' });
+    }
+
+    // Remove the pending request
+    mess.pendingRequests = mess.pendingRequests.filter(
+      req => !(req.user.toString() === userId.toString() && req.status === 'pending')
+    );
+
+    await mess.save();
+
+    // Emit real-time update to mess admin
+    emitMessUpdate(mess._id, 'request-cancelled', {
+      userId: userId,
+      userName: req.user.fullName,
+      cancelledAt: new Date()
+    });
+
+    // Emit to user
+    emitJoinRequestUpdate(userId, 'cancelled', {
+      id: mess._id,
+      name: mess.name,
+      identifierCode: mess.identifierCode
+    });
+
+    res.json({
+      message: 'Join request cancelled successfully',
+      status: 'cancelled',
+    });
+  } catch (error) {
+    console.error('Cancel join request error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -441,4 +662,6 @@ module.exports = {
   getPendingRequests,
   acceptMemberRequest,
   rejectMemberRequest,
+  checkRequestStatus,
+  cancelJoinRequest,
 }; 

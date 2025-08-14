@@ -4,7 +4,7 @@ PROJECT OVERVIEW:
 DailyHome is a comprehensive mess (shared accommodation) management system with user authentication, 
 mess management, financial tracking, and reporting capabilities.
 
-CURRENT VERSION: 2.0.0 (User Management System)
+CURRENT VERSION: 2.1.0 (Enhanced User State Management System)
 
 TECH STACK:
 - Backend: Node.js + Express
@@ -24,7 +24,15 @@ CORE FEATURES IMPLEMENTED:
    - Email verification required for login
    - Unverified users can re-register (old account replaced)
 
-2. MESS MANAGEMENT SYSTEM:
+2. COMPREHENSIVE USER STATE MANAGEMENT:
+   - Real-time user state detection for UI routing
+   - Pending join request status tracking
+   - Mess membership state management
+   - Admin role state management
+   - State flags for frontend UI decisions
+   - Real-time request status polling support
+
+3. MESS MANAGEMENT SYSTEM:
    - Create mess with name and address
    - Unique 6-digit identifier codes for each mess
    - Request to join mess using identifier codes (requires admin approval)
@@ -32,8 +40,10 @@ CORE FEATURES IMPLEMENTED:
    - Leave mess functionality
    - Mess admin privileges
    - One user per mess (can't join multiple)
+   - Cancel join request functionality
+   - Real-time request status checking
 
-3. FINANCIAL MANAGEMENT:
+4. FINANCIAL MANAGEMENT:
    - Wallet system for each user
    - Deposit money with transaction history
    - Bazar (grocery) expense tracking
@@ -41,7 +51,7 @@ CORE FEATURES IMPLEMENTED:
    - Automatic meal rate calculation
    - User-wise financial summaries
 
-4. REPORTING SYSTEM:
+5. REPORTING SYSTEM:
    - Daily meal summaries
    - Monthly financial reports
    - User-wise expense breakdown
@@ -66,6 +76,7 @@ DATABASE MODELS:
    - identifierCode (unique 6-digit)
    - admin (User ref)
    - members (array with user, joinedAt, isActive)
+   - pendingRequests (array with user, requestedAt, status)
    - isActive (boolean)
    - timestamps
 
@@ -108,7 +119,9 @@ AUTHENTICATION:
 - POST /api/auth/verify-otp - Verify email with OTP
 - POST /api/auth/resend-otp - Resend OTP
 - POST /api/auth/login - User login (unlimited token)
-- GET /api/auth/me - Get user profile
+- GET /api/auth/me - Get user profile and state (ENHANCED)
+- POST /api/auth/request-password-reset - Request password reset
+- POST /api/auth/reset-password - Reset password with OTP
 
 MESS MANAGEMENT:
 - POST /api/mess - Create new mess
@@ -120,6 +133,8 @@ MESS MANAGEMENT:
 - POST /api/mess/leave - Leave mess
 - GET /api/mess - Get mess details
 - DELETE /api/mess/members/:memberId - Remove member (admin only)
+- GET /api/mess/check-request-status - Check request status (real-time) [NEW]
+- POST /api/mess/cancel-request - Cancel join request [NEW]
 
 FINANCIAL MANAGEMENT:
 - GET /api/wallets - Get user wallet transactions
@@ -141,6 +156,29 @@ MEAL MANAGEMENT:
 REPORTS:
 - GET /api/summary - Get monthly summary report
 
+USER STATE MANAGEMENT SYSTEM:
+
+1. User States:
+   - No Mess State: User can create or join mess
+   - Pending Request State: User waiting for admin approval
+   - Mess Member State: User is active member
+   - Mess Admin State: User is mess admin with privileges
+
+2. State Flags (from /api/auth/me):
+   - hasMess: User is member of a mess
+   - isMessAdmin: User is mess admin
+   - hasPendingRequest: User has pending join request
+   - pendingRequestMess: Details of mess with pending request
+   - canCreateMess: User can create new mess
+   - canJoinMess: User can join existing mess
+   - shouldShowDashboard: User should see main dashboard
+
+3. Real-time Features:
+   - Request status polling support
+   - Automatic state updates
+   - Cancel request functionality
+   - Seamless UI transitions
+
 SECURITY FEATURES:
 - JWT authentication with unlimited expiry
 - Password hashing with bcrypt
@@ -148,6 +186,7 @@ SECURITY FEATURES:
 - Role-based access control (mess admin)
 - Data isolation (users only see their mess data)
 - Input validation and sanitization
+- State-based access control
 
 ENVIRONMENT VARIABLES REQUIRED:
 - MONGO_URI=mongodb://localhost:27017/homeManagementFinal
@@ -164,22 +203,61 @@ KEY BUSINESS LOGIC:
    - User can login → Gets unlimited JWT token
    - Unverified users can re-register (old account deleted)
 
-2. MESS CREATION FLOW:
+2. USER STATE MANAGEMENT FLOW:
+   - User logs in → /api/auth/me called
+   - System determines user state based on:
+     * Current mess membership
+     * Pending join requests
+     * Admin status
+   - Frontend routes to appropriate UI based on state flags
+   - Real-time polling for pending request status updates
+
+3. MESS CREATION FLOW:
    - User creates mess → Becomes admin
    - Gets unique 6-digit identifier code
    - Can invite others using the code
    - Admin has additional privileges
    - Users request to join → Admin approves/rejects
 
-3. FINANCIAL CALCULATION:
+4. MESS JOINING FLOW:
+   - User requests to join → Pending state
+   - Frontend shows waiting screen with cancel option
+   - Real-time polling checks for status updates
+   - If accepted → User becomes member, redirected to dashboard
+   - If rejected → User can try joining another mess
+   - User can cancel request anytime
+
+5. FINANCIAL CALCULATION:
    - Total bazar cost / Total meals = Meal rate
    - User cost = User meals × Meal rate
    - User balance = Deposits - User cost
 
-4. DATA ISOLATION:
+6. DATA ISOLATION:
    - All operations scoped to user's current mess
    - Users can only access their mess data
    - Admin can manage mess members
+
+FRONTEND INTEGRATION:
+
+1. State-Based Routing:
+   - Use /api/auth/me response to determine UI state
+   - Implement state flags for conditional rendering
+   - Handle all user states gracefully
+
+2. Real-time Updates:
+   - Poll /api/mess/check-request-status for pending requests
+   - Implement proper cleanup for polling intervals
+   - Handle status changes with smooth transitions
+
+3. Error Handling:
+   - Graceful API error handling
+   - User-friendly error messages
+   - Retry mechanisms for failed requests
+
+4. Performance Optimization:
+   - Cache user state appropriately
+   - Use efficient polling intervals
+   - Implement proper cleanup
 
 MIGRATION FROM V1:
 - Removed room-based system
@@ -187,6 +265,8 @@ MIGRATION FROM V1:
 - Introduced mess concept
 - Updated all models for user-based system
 - Added comprehensive access control
+- Implemented user state management
+- Added real-time request status checking
 
 FUTURE ENHANCEMENTS:
 - Admin transfer functionality
@@ -195,18 +275,23 @@ FUTURE ENHANCEMENTS:
 - Push notifications
 - Mobile app integration
 - Advanced reporting features
+- WebSocket support for real-time updates
+- Offline support with sync
 
 DEPLOYMENT NOTES:
 - Database: MongoDB (local or cloud)
 - Email: Gmail SMTP with App Password
 - Server: Node.js environment
 - Documentation: Swagger UI at /api-docs
+- State Management: Comprehensive user state system
 
 TROUBLESHOOTING:
 - Email issues: Check Gmail App Password setup
 - Database issues: Verify MONGO_URI connection
 - JWT issues: Ensure JWT_SECRET is set
 - OTP issues: Check email configuration
+- State issues: Verify user state flags
+- Polling issues: Check cleanup in component destruction
 
 This document serves as complete reference for the DailyHome app. 
 When switching between Cursor accounts, provide this file to understand the current system state.

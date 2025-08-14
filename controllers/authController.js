@@ -187,7 +187,45 @@ const getMe = async (req, res) => {
       .select('-password')
       .populate('currentMess', 'name identifierCode');
 
-    res.json(user);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Simple state object with only essential information
+    const userState = {
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        isEmailVerified: user.isEmailVerified,
+      },
+      // Essential state flags for UI routing
+      hasMess: !!user.currentMess,
+      isMessAdmin: user.isMessAdmin || false,
+      currentMess: user.currentMess,
+    };
+
+    // Check for pending request only if user doesn't have a mess
+    if (!user.currentMess) {
+      const Mess = require('../models/Mess');
+      const pendingRequest = await Mess.findOne({
+        'pendingRequests.user': user._id,
+        'pendingRequests.status': 'pending'
+      }).select('name identifierCode');
+
+      if (pendingRequest) {
+        userState.hasPendingRequest = true;
+        userState.pendingRequestMess = {
+          id: pendingRequest._id,
+          name: pendingRequest.name,
+          identifierCode: pendingRequest.identifierCode,
+        };
+      } else {
+        userState.hasPendingRequest = false;
+      }
+    }
+
+    res.json(userState);
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({ message: 'Server error' });
