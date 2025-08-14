@@ -453,6 +453,13 @@ router.post('/reject-request', auth, requireMess, requireMessAdmin, rejectMember
  *                           type: string
  *                         admin:
  *                           type: object
+ *                           properties:
+ *                             _id:
+ *                               type: string
+ *                             fullName:
+ *                               type: string
+ *                             email:
+ *                               type: string
  *                 - type: object
  *                   properties:
  *                     status:
@@ -472,6 +479,15 @@ router.post('/reject-request', auth, requireMess, requireMessAdmin, rejectMember
  *                           type: string
  *                         identifierCode:
  *                           type: string
+ *                         admin:
+ *                           type: object
+ *                           properties:
+ *                             _id:
+ *                               type: string
+ *                             fullName:
+ *                               type: string
+ *                             email:
+ *                               type: string
  *                     request:
  *                       type: object
  *                       properties:
@@ -497,6 +513,15 @@ router.post('/reject-request', auth, requireMess, requireMessAdmin, rejectMember
  *                           type: string
  *                         identifierCode:
  *                           type: string
+ *                         admin:
+ *                           type: object
+ *                           properties:
+ *                             _id:
+ *                               type: string
+ *                             fullName:
+ *                               type: string
+ *                             email:
+ *                               type: string
  *                 - type: object
  *                   properties:
  *                     status:

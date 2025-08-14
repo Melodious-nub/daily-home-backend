@@ -538,7 +538,8 @@ const checkRequestStatus = async (req, res) => {
     const pendingRequest = await Mess.findOne({
       'pendingRequests.user': userId,
       'pendingRequests.status': 'pending'
-    });
+    })
+    .populate('admin', 'fullName email');
 
     if (pendingRequest && pendingRequest.pendingRequests) {
       const requestDetails = pendingRequest.pendingRequests.find(
@@ -554,6 +555,7 @@ const checkRequestStatus = async (req, res) => {
             name: pendingRequest.name,
             address: pendingRequest.address,
             identifierCode: pendingRequest.identifierCode,
+            admin: pendingRequest.admin,
           },
           request: {
             id: requestDetails._id,
@@ -567,7 +569,8 @@ const checkRequestStatus = async (req, res) => {
     const rejectedRequest = await Mess.findOne({
       'pendingRequests.user': userId,
       'pendingRequests.status': 'rejected'
-    });
+    })
+    .populate('admin', 'fullName email');
 
     if (rejectedRequest && rejectedRequest.pendingRequests) {
       const rejectedRequestDetails = rejectedRequest.pendingRequests.find(
@@ -582,6 +585,7 @@ const checkRequestStatus = async (req, res) => {
             id: rejectedRequest._id,
             name: rejectedRequest.name,
             identifierCode: rejectedRequest.identifierCode,
+            admin: rejectedRequest.admin,
           },
         });
       }
