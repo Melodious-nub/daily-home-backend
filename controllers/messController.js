@@ -2,6 +2,10 @@ const Mess = require('../models/Mess');
 const User = require('../models/User');
 const Member = require('../models/Member');
 const { emitJoinRequestUpdate, emitMessUpdate } = require('../utils/socketEmitter');
+const { 
+  sendMessRequestAcceptedEmail, 
+  sendMessRequestRejectedEmail
+} = require('../utils/emailService');
 
 // @desc    Create a new mess
 // @route   POST /api/mess
@@ -290,6 +294,21 @@ const acceptMemberRequest = async (req, res) => {
       joinedAt: new Date()
     });
 
+    // Send email notification to the accepted user
+    try {
+      await sendMessRequestAcceptedEmail(
+        user.email,
+        user.fullName,
+        mess.name,
+        mess.address,
+        mess.identifierCode
+      );
+      console.log(`📧 Email notification sent to ${user.email} for accepted request`);
+    } catch (emailError) {
+      console.error('Failed to send acceptance email:', emailError);
+      // Don't fail the request if email fails
+    }
+
     res.json({
       message: 'Member request accepted successfully',
       user: {
@@ -331,6 +350,9 @@ const rejectMemberRequest = async (req, res) => {
     request.status = 'rejected';
     await mess.save();
 
+    // Get user details for email notification
+    const requestingUser = await User.findById(request.user);
+    
     // Emit real-time update to requesting user
     const messData = {
       id: mess._id,
@@ -340,6 +362,22 @@ const rejectMemberRequest = async (req, res) => {
     };
 
     emitJoinRequestUpdate(request.user, 'rejected', messData);
+
+    // Send email notification to the rejected user
+    if (requestingUser) {
+      try {
+        await sendMessRequestRejectedEmail(
+          requestingUser.email,
+          requestingUser.fullName,
+          mess.name,
+          mess.identifierCode
+        );
+        console.log(`📧 Email notification sent to ${requestingUser.email} for rejected request`);
+      } catch (emailError) {
+        console.error('Failed to send rejection email:', emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     res.json({
       message: 'Member request rejected successfully',

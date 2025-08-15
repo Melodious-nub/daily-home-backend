@@ -1,6 +1,6 @@
 {
   "name": "home-management-backend",
-  "version": "2.0.0",
+  "version": "2.3.0",
   "description": "home management app",
   "main": "app.js",
   "scripts": {
@@ -19,6 +19,7 @@
     "mongoose": "^8.16.4",
     "nodemailer": "^6.9.7",
     "socket.io": "^4.7.4",
+    "socket.io-client": "^4.7.4",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },

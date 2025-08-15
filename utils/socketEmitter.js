@@ -79,6 +79,8 @@ const getStatusMessage = (status) => {
       return 'Your join request has been accepted!';
     case 'rejected':
       return 'Your join request was rejected.';
+    case 'cancelled':
+      return 'Your join request has been cancelled.';
     case 'pending':
       return 'Your join request is pending approval.';
     default:
