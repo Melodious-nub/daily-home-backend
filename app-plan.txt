@@ -4,7 +4,7 @@ PROJECT OVERVIEW:
 DailyHome is a comprehensive mess (shared accommodation) management system with user authentication, 
 mess management, financial tracking, and reporting capabilities.
 
-CURRENT VERSION: 2.2.0 (Real-Time WebSocket System)
+CURRENT VERSION: 2.4.0 (Enhanced Mess Creation with Member Invitations & Fixed Costs)
 
 TECH STACK:
 - Backend: Node.js + Express
@@ -33,13 +33,19 @@ CORE FEATURES IMPLEMENTED:
    - JWT token authentication for all WebSocket connections
    - Comprehensive error handling and connection health monitoring
 
-3. MESS MANAGEMENT SYSTEM:
-   - Create mess with name and address
+3. ENHANCED MESS MANAGEMENT SYSTEM:
+   - Multi-step mess creation with optional member invitations and fixed costs
+   - Email validation system for member invitations (optional during creation)
+   - Comprehensive member validation (existing mess, pending requests)
+   - Automatic email notifications for invited members
+   - Role-based member management (member, moderator, admin)
+   - Fixed costs management (rent, bills, utilities, etc.) - optional during creation
+   - Members and fixed costs can be added later from dashboard
    - Unique 6-digit identifier codes for each mess
    - Request to join mess using identifier codes (requires admin approval)
    - Admin can accept/reject member requests
    - Leave mess functionality
-   - Mess admin privileges
+   - Mess admin privileges with role transfer capability
    - One user per mess (can't join multiple)
    - Cancel join request functionality
    - Real-time WebSocket status updates
@@ -77,9 +83,19 @@ DATABASE MODELS:
    - address (required)
    - identifierCode (unique 6-digit)
    - admin (User ref)
-   - members (array with user, joinedAt, isActive)
+   - members (array with user, role, joinedAt, isActive, invitedBy)
    - pendingRequests (array with user, requestedAt, status)
    - isActive (boolean)
+   - timestamps
+
+3. FixedCost Model:
+   - mess (Mess ref, required)
+   - name (required)
+   - amount (number, required)
+   - type (enum: houseRent, maidBill, wifiBill, etc., optional, defaults to 'other')
+   - description (string, optional)
+   - isActive (boolean)
+   - addedBy (User ref)
    - timestamps
 
 3. Wallet Model:
@@ -126,7 +142,8 @@ AUTHENTICATION:
 - POST /api/auth/reset-password - Reset password with OTP
 
 MESS MANAGEMENT:
-- POST /api/mess - Create new mess
+- POST /api/mess/validate-email - Validate email for mess invitation [NEW]
+- POST /api/mess - Create new mess with members and fixed costs [ENHANCED]
 - GET /api/mess/search/:code - Search mess by code
 - POST /api/mess/join - Request to join mess
 - GET /api/mess/pending-requests - Get pending requests (admin only)
@@ -135,8 +152,15 @@ MESS MANAGEMENT:
 - POST /api/mess/leave - Leave mess
 - GET /api/mess - Get mess details
 - DELETE /api/mess/members/:memberId - Remove member (admin only)
-- GET /api/mess/check-request-status - Check request status (WebSocket real-time) [NEW]
-- POST /api/mess/cancel-request - Cancel join request [NEW]
+- GET /api/mess/check-request-status - Check request status (WebSocket real-time)
+- POST /api/mess/cancel-request - Cancel join request
+
+FIXED COSTS MANAGEMENT:
+- GET /api/fixed-costs - Get mess fixed costs [NEW]
+- POST /api/fixed-costs - Add fixed cost (admin/moderator) [NEW]
+- PUT /api/fixed-costs/:id - Update fixed cost (admin/moderator) [NEW]
+- DELETE /api/fixed-costs/:id - Delete fixed cost (admin/moderator) [NEW]
+- GET /api/fixed-costs/summary - Get fixed cost summary [NEW]
 
 FINANCIAL MANAGEMENT:
 - GET /api/wallets - Get user wallet transactions
@@ -218,12 +242,15 @@ KEY BUSINESS LOGIC:
    - Real-time WebSocket events for instant status updates
    - Automatic reconnection and connection health monitoring
 
-3. MESS CREATION FLOW:
-   - User creates mess → Becomes admin
-   - Gets unique 6-digit identifier code
-   - Can invite others using the code
-   - Admin has additional privileges
-   - Users request to join → Admin approves/rejects
+3. ENHANCED MESS CREATION FLOW:
+   - Step 1: User enters basic info (name, address)
+   - Step 2: User validates and adds member emails
+   - Step 3: User adds fixed costs (rent, bills, etc.)
+   - Step 4: System validates all members (existing mess, pending requests)
+   - Step 5: Mess created with all members and fixed costs
+   - Step 6: Invitation emails sent to all members
+   - Step 7: Creator becomes admin, invited users become members
+   - Step 8: Real-time WebSocket updates sent to all members
 
 4. MESS JOINING FLOW:
    - User requests to join → Pending state

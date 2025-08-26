@@ -173,6 +173,10 @@ Use the provided test scripts to verify functionality:
         description: 'Analytics and reporting endpoints for mess activities'
       },
       {
+        name: 'Fixed Costs',
+        description: 'Fixed cost management for mess expenses (rent, bills, etc.)'
+      },
+      {
         name: 'WebSocket',
         description: 'Real-time communication events and connection management'
       }

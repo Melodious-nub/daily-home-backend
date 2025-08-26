@@ -51,6 +51,7 @@ app.use('/api/mess', require('./routes/messRoutes'));
 app.use('/api/wallets', require('./routes/walletRoutes'));
 app.use('/api/bazars', require('./routes/bazarRoutes'));
 app.use('/api/meals', require('./routes/mealRoutes'));
+app.use('/api/fixed-costs', require('./routes/fixedCostRoutes'));
 app.use('/api/summary', require('./routes/summaryRoutes'));
 
 // Root

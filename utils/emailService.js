@@ -168,7 +168,41 @@ const sendMessRequestRejectedEmail = async (email, fullName, messName, identifie
   }
 };
 
+// Send Mess Invitation Email
+const sendMessInvitationEmail = async (email, fullName, messName, messAddress, identifierCode, invitedBy) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `DailyHome - You've Been Invited to Join ${messName}!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; color: #000000;">
+        <h2 style="color: #000000; margin-bottom: 20px; font-size: 24px;">Welcome to ${messName}!</h2>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Hello ${fullName},</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">You have been invited by <strong>${invitedBy}</strong> to join <strong>${messName}</strong> as a member!</p>
+        
+        <div style="background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 25px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h3 style="color: #000000; margin-top: 0;">Mess Details:</h3>
+          <p style="color: #000000; font-size: 16px; line-height: 1.5;"><strong>Name:</strong> ${messName}</p>
+          <p style="color: #000000; font-size: 16px; line-height: 1.5;"><strong>Address:</strong> ${messAddress}</p>
+          <p style="color: #000000; font-size: 16px; line-height: 1.5;"><strong>Identifier Code:</strong> ${identifierCode}</p>
+          <p style="color: #000000; font-size: 16px; line-height: 1.5;"><strong>Invited By:</strong> ${invitedBy}</p>
+        </div>
+        
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">You are now a member of this mess and can access all mess features including meal tracking, expense management, and financial reports.</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Welcome to the DailyHome family!</p>
+        <p style="color: #000000; font-size: 16px; line-height: 1.5;">Best regards,<br>DailyHome Team</p>
+      </div>
+    `,
+  };
 
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('Email sending error:', error);
+    return false;
+  }
+};
 
 module.exports = {
   sendOTPEmail,
@@ -176,4 +210,5 @@ module.exports = {
   sendSignupVerificationEmail,
   sendMessRequestAcceptedEmail,
   sendMessRequestRejectedEmail,
+  sendMessInvitationEmail,
 }; 

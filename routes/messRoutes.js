@@ -13,7 +13,61 @@ const {
   rejectMemberRequest,
   checkRequestStatus,
   cancelJoinRequest,
+  validateEmailForInvitation,
 } = require('../controllers/messController');
+
+/**
+ * @swagger
+ * /api/mess/validate-email:
+ *   post:
+ *     tags:
+ *       - Mess
+ *     summary: Validate email for mess invitation
+ *     description: Check if an email is valid for mess invitation (user exists, not in another mess, no pending requests)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email to validate
+ *     responses:
+ *       200:
+ *         description: Email validation result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 isValid:
+ *                   type: boolean
+ *                 reason:
+ *                   type: string
+ *                   description: Reason if email is not valid
+ *                 user:
+ *                   type: object
+ *                   description: User details if email is valid
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     fullName:
+ *                       type: string
+ *       400:
+ *         description: Email is required
+ */
+router.post('/validate-email', auth, validateEmailForInvitation);
 
 /**
  * @swagger
@@ -21,8 +75,8 @@ const {
  *   post:
  *     tags:
  *       - Mess
- *     summary: Create a new mess
- *     description: Create a new mess and become its admin
+ *     summary: Create a new mess with members and fixed costs
+ *     description: Create a new mess with invited members and fixed costs in a single API call
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -41,9 +95,38 @@ const {
  *               address:
  *                 type: string
  *                 description: Address of the mess
+ *               members:
+ *                 type: array
+ *                 description: Array of member emails to invite
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                       description: Member email address
+ *               fixedCosts:
+ *                 type: array
+ *                 description: Array of fixed costs to add
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       description: Name of the fixed cost
+ *                     amount:
+ *                       type: number
+ *                       description: Amount of the fixed cost
+ *                     type:
+ *                       type: string
+ *                       enum: [houseRent, maidBill, wifiBill, electricityBill, gasBill, waterBill, cleaningBill, other]
+ *                       description: Type of fixed cost (optional, defaults to 'other')
+ *                     description:
+ *                       type: string
+ *                       description: Optional description
  *     responses:
  *       201:
- *         description: Mess created successfully
+ *         description: Mess created successfully with invited members
  *         content:
  *           application/json:
  *             schema:
@@ -62,8 +145,36 @@ const {
  *                       type: string
  *                     identifierCode:
  *                       type: string
+ *                     admin:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         fullName:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                     members:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           fullName:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                           role:
+ *                             type: string
+ *                     memberCount:
+ *                       type: number
+ *                     fixedCosts:
+ *                       type: array
+ *                       items:
+ *                         type: object
  *       400:
- *         description: User is already part of a mess
+ *         description: Validation error (user already in mess, invalid members, etc.)
  *       401:
  *         description: Unauthorized
  */

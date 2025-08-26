@@ -1,23 +1,181 @@
 const Mess = require('../models/Mess');
 const User = require('../models/User');
 const Member = require('../models/Member');
+const FixedCost = require('../models/FixedCost');
 const { emitJoinRequestUpdate, emitMessUpdate } = require('../utils/socketEmitter');
 const { 
   sendMessRequestAcceptedEmail, 
-  sendMessRequestRejectedEmail
+  sendMessRequestRejectedEmail,
+  sendMessInvitationEmail
 } = require('../utils/emailService');
 
-// @desc    Create a new mess
+// @desc    Validate email for mess invitation
+// @route   POST /api/mess/validate-email
+// @access  Private
+const validateEmailForInvitation = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        message: 'Email is required',
+        isValid: false,
+        reason: 'Email is required'
+      });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(200).json({
+        message: 'User not found with this email',
+        isValid: false,
+        reason: 'User not found with this email'
+      });
+    }
+
+    // Check if user is already in a mess
+    if (user.currentMess) {
+      return res.status(200).json({
+        message: 'User is already a member of another mess',
+        isValid: false,
+        reason: 'User is already a member of another mess'
+      });
+    }
+
+    // Check if user has pending requests
+    const pendingRequest = await Mess.findOne({
+      'pendingRequests.user': user._id,
+      'pendingRequests.status': 'pending'
+    });
+
+    if (pendingRequest) {
+      return res.status(200).json({
+        message: 'User has a pending join request for another mess',
+        isValid: false,
+        reason: 'User has a pending join request for another mess'
+      });
+    }
+
+    // Email is valid for invitation
+    return res.status(200).json({
+      message: 'Email is valid for invitation',
+      isValid: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        fullName: user.fullName
+      }
+    });
+
+  } catch (error) {
+    console.error('Email validation error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Create a new mess with members and fixed costs
 // @route   POST /api/mess
 // @access  Private
 const createMess = async (req, res) => {
   try {
-    const { name, address } = req.body;
+    const { 
+      name, 
+      address, 
+      members = [], 
+      fixedCosts = [] 
+    } = req.body;
+    
     const userId = req.user._id;
 
     // Check if user is already in a mess
     if (req.user.currentMess) {
       return res.status(400).json({ message: 'User is already part of a mess' });
+    }
+
+    // Validate basic information
+    if (!name || !address) {
+      return res.status(400).json({ message: 'Mess name and address are required' });
+    }
+
+    // Validate members array
+    if (!Array.isArray(members)) {
+      return res.status(400).json({ message: 'Members must be an array' });
+    }
+
+    // Validate fixed costs array
+    if (!Array.isArray(fixedCosts)) {
+      return res.status(400).json({ message: 'Fixed costs must be an array' });
+    }
+
+    // Validate member emails
+    const memberEmails = members.map(m => m.email.toLowerCase());
+    const uniqueEmails = [...new Set(memberEmails)];
+    
+    if (uniqueEmails.length !== memberEmails.length) {
+      return res.status(400).json({ message: 'Duplicate email addresses found in members list' });
+    }
+
+    // Check if creator's email is in the members list
+    if (memberEmails.includes(req.user.email.toLowerCase())) {
+      return res.status(400).json({ message: 'You cannot add yourself to the members list' });
+    }
+
+    // Validate each member email
+    const memberValidationResults = [];
+    for (const member of members) {
+      const user = await User.findOne({ email: member.email.toLowerCase() });
+      
+      if (!user) {
+        memberValidationResults.push({
+          email: member.email,
+          isValid: false,
+          reason: 'User not found with this email'
+        });
+        continue;
+      }
+
+      if (user.currentMess) {
+        memberValidationResults.push({
+          email: member.email,
+          isValid: false,
+          reason: 'User is already a member of another mess'
+        });
+        continue;
+      }
+
+      const pendingRequest = await Mess.findOne({
+        'pendingRequests.user': user._id,
+        'pendingRequests.status': 'pending'
+      });
+
+      if (pendingRequest) {
+        memberValidationResults.push({
+          email: member.email,
+          isValid: false,
+          reason: 'User has a pending join request for another mess'
+        });
+        continue;
+      }
+
+      memberValidationResults.push({
+        email: member.email,
+        isValid: true,
+        user: {
+          id: user._id,
+          email: user.email,
+          fullName: user.fullName
+        }
+      });
+    }
+
+    // Check if any member validation failed
+    const invalidMembers = memberValidationResults.filter(result => !result.isValid);
+    if (invalidMembers.length > 0) {
+      return res.status(400).json({
+        message: 'Some members cannot be added',
+        invalidMembers
+      });
     }
 
     // Generate unique identifier code
@@ -29,40 +187,123 @@ const createMess = async (req, res) => {
       address,
       identifierCode,
       admin: userId,
-      members: [{ user: userId, joinedAt: new Date(), isActive: true }],
+      members: [{ 
+        user: userId, 
+        role: 'admin',
+        joinedAt: new Date(), 
+        isActive: true 
+      }],
     });
+
+    // Add invited members
+    for (const memberResult of memberValidationResults) {
+      if (memberResult.isValid) {
+        mess.members.push({
+          user: memberResult.user.id,
+          role: 'member',
+          joinedAt: new Date(),
+          isActive: true,
+          invitedBy: userId
+        });
+      }
+    }
 
     await mess.save();
 
-    // Update user
-    const user = await User.findById(userId);
-    user.currentMess = mess._id;
-    user.isMessAdmin = true;
-    await user.save();
+    // Update creator user
+    const creatorUser = await User.findById(userId);
+    creatorUser.currentMess = mess._id;
+    creatorUser.isMessAdmin = true;
+    creatorUser.messRole = 'admin';
+    await creatorUser.save();
 
-    // Create member record
-    const member = new Member({
+    // Update invited users
+    for (const memberResult of memberValidationResults) {
+      if (memberResult.isValid) {
+        const invitedUser = await User.findById(memberResult.user.id);
+        invitedUser.currentMess = mess._id;
+        invitedUser.isMessAdmin = false;
+        invitedUser.messRole = 'member';
+        await invitedUser.save();
+
+        // Create member record
+        const member = new Member({
+          user: memberResult.user.id,
+          mess: mess._id,
+          name: memberResult.user.fullName,
+        });
+        await member.save();
+
+        // Send invitation email
+        try {
+          await sendMessInvitationEmail(
+            memberResult.user.email,
+            memberResult.user.fullName,
+            mess.name,
+            mess.address,
+            mess.identifierCode,
+            creatorUser.fullName
+          );
+          console.log(`📧 Invitation email sent to ${memberResult.user.email}`);
+        } catch (emailError) {
+          console.error('Failed to send invitation email:', emailError);
+        }
+      }
+    }
+
+    // Create member record for creator
+    const creatorMember = new Member({
       user: userId,
       mess: mess._id,
-      name: user.fullName,
+      name: creatorUser.fullName,
     });
-    await member.save();
+    await creatorMember.save();
 
-    // Emit real-time update to user
+    // Add fixed costs if provided
+    const createdFixedCosts = [];
+    if (fixedCosts.length > 0) {
+      for (const cost of fixedCosts) {
+        const fixedCost = new FixedCost({
+          mess: mess._id,
+          name: cost.name,
+          amount: cost.amount,
+          type: cost.type || 'other',
+          description: cost.description,
+          addedBy: userId
+        });
+        await fixedCost.save();
+        createdFixedCosts.push(fixedCost);
+      }
+    }
+
+    // Emit real-time update to all members
     emitMessUpdate(mess._id, 'mess-created', {
       messId: mess._id,
       name: mess.name,
-      identifierCode: mess.identifierCode
+      identifierCode: mess.identifierCode,
+      memberCount: mess.members.length
     });
 
     res.status(201).json({
-      message: 'Mess created successfully',
+      message: 'Mess created successfully with invited members',
       mess: {
         id: mess._id,
         name: mess.name,
         address: mess.address,
         identifierCode: mess.identifierCode,
-        admin: mess.admin,
+        admin: {
+          id: creatorUser._id,
+          fullName: creatorUser.fullName,
+          email: creatorUser.email
+        },
+        members: memberValidationResults.filter(m => m.isValid).map(m => ({
+          id: m.user.id,
+          fullName: m.user.fullName,
+          email: m.user.email,
+          role: 'member'
+        })),
+        memberCount: mess.members.length,
+        fixedCosts: createdFixedCosts
       },
     });
   } catch (error) {
@@ -706,4 +947,5 @@ module.exports = {
   rejectMemberRequest,
   checkRequestStatus,
   cancelJoinRequest,
+  validateEmailForInvitation,
 }; 

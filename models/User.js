@@ -37,6 +37,11 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  messRole: {
+    type: String,
+    enum: ['member', 'moderator', 'admin'],
+    default: 'member',
+  },
   // Password reset OTP and expiry
   resetPassword: {
     code: String,

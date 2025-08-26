@@ -27,6 +27,11 @@ const messSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    role: {
+      type: String,
+      enum: ['member', 'moderator', 'admin'],
+      default: 'member',
+    },
     joinedAt: {
       type: Date,
       default: Date.now,
@@ -34,6 +39,10 @@ const messSchema = new Schema({
     isActive: {
       type: Boolean,
       default: true,
+    },
+    invitedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
     },
   }],
   pendingRequests: [{
