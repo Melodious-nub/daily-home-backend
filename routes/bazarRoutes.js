@@ -88,6 +88,75 @@ router.post('/', auth, requireMess, bazarController.addBazar);
  *       404:
  *         description: Bazar not found
  */
+/**
+ * @swagger
+ * /api/bazars/{id}:
+ *   get:
+ *     tags:
+ *       - Bazars
+ *     description: Get a specific bazar entry with wallet deposit info
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the bazar entry
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bazar details with wallet deposit info
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Bazar not found
+ */
+router.get('/:id', auth, requireMess, bazarController.getBazarById);
+
+/**
+ * @swagger
+ * /api/bazars/summary:
+ *   get:
+ *     tags:
+ *       - Bazars
+ *     description: Get bazar summary with wallet integration and user-wise breakdown
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Bazar summary with wallet integration
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalBazarCost:
+ *                   type: number
+ *                   description: Total cost of all bazars
+ *                 totalWalletDeposits:
+ *                   type: number
+ *                   description: Total amount added to wallets from bazars
+ *                 bazarCount:
+ *                   type: number
+ *                   description: Total number of bazar entries
+ *                 userWiseBazar:
+ *                   type: array
+ *                   description: Breakdown by user
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       user:
+ *                         type: object
+ *                       totalBazarCost:
+ *                         type: number
+ *                       totalWalletDeposits:
+ *                         type: number
+ *                       bazarCount:
+ *                         type: number
+ */
+router.get('/summary', auth, requireMess, bazarController.getBazarSummary);
+
 router.delete('/:id', auth, requireMess, bazarController.deleteBazar);
 
 module.exports = router;

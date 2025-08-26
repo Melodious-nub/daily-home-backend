@@ -65,6 +65,12 @@ const messSchema = new Schema({
     type: Boolean,
     default: true,
   },
+  // Mess configuration flags
+  bazarIsDeposit: {
+    type: Boolean,
+    default: false,
+    description: 'If true, bazar expenses automatically add to user wallet as deposit'
+  },
 }, {
   timestamps: true
 });

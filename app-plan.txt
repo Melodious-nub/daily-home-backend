@@ -4,7 +4,7 @@ PROJECT OVERVIEW:
 DailyHome is a comprehensive mess (shared accommodation) management system with user authentication, 
 mess management, financial tracking, and reporting capabilities.
 
-CURRENT VERSION: 2.4.0 (Enhanced Mess Creation with Member Invitations & Fixed Costs)
+CURRENT VERSION: 2.5.0 (Enhanced Mess Creation with Member Invitations, Fixed Costs & Dynamic Bazar-Wallet Integration)
 
 TECH STACK:
 - Backend: Node.js + Express
@@ -50,14 +50,19 @@ CORE FEATURES IMPLEMENTED:
    - Cancel join request functionality
    - Real-time WebSocket status updates
    - Professional real-time communication system
+   - Dynamic mess configuration with bazarIsDeposit flag
+   - Bazar-Wallet integration for automatic deposit tracking
 
 4. FINANCIAL MANAGEMENT:
    - Wallet system for each user
    - Deposit money with transaction history
-   - Bazar (grocery) expense tracking
+   - Bazar (grocery) expense tracking with automatic wallet integration
+   - User-wise bazar tracking with automatic deposit creation
+   - Configurable bazarIsDeposit flag for dynamic mess management
    - Meal counting and cost calculation
    - Automatic meal rate calculation
    - User-wise financial summaries
+   - Enhanced bazar summary with wallet integration
 
 5. REPORTING SYSTEM:
    - Daily meal summaries
@@ -86,6 +91,7 @@ DATABASE MODELS:
    - members (array with user, role, joinedAt, isActive, invitedBy)
    - pendingRequests (array with user, requestedAt, status)
    - isActive (boolean)
+   - bazarIsDeposit (boolean, configurable flag for bazar-wallet integration)
    - timestamps
 
 3. FixedCost Model:
@@ -102,7 +108,7 @@ DATABASE MODELS:
    - user (User ref)
    - mess (Mess ref)
    - amount (number)
-   - type (deposit/withdrawal/meal_deduction)
+   - type (deposit/withdrawal/meal_deduction/bazar_deposit)
    - description (string)
    - date (timestamp)
 
@@ -112,6 +118,8 @@ DATABASE MODELS:
    - description (string)
    - mess (Mess ref)
    - addedBy (User ref)
+   - walletDepositCreated (boolean, tracks if bazar was added to wallet)
+   - walletDepositId (Wallet ref, reference to created wallet deposit)
    - timestamps
 
 5. Meal Model:
@@ -154,6 +162,7 @@ MESS MANAGEMENT:
 - DELETE /api/mess/members/:memberId - Remove member (admin only)
 - GET /api/mess/check-request-status - Check request status (WebSocket real-time)
 - POST /api/mess/cancel-request - Cancel join request
+- PUT /api/mess/config - Update mess configuration (admin only) [NEW]
 
 FIXED COSTS MANAGEMENT:
 - GET /api/fixed-costs - Get mess fixed costs [NEW]
@@ -170,8 +179,10 @@ FINANCIAL MANAGEMENT:
 
 BAZAR MANAGEMENT:
 - GET /api/bazars - Get mess bazar entries
-- POST /api/bazars - Add bazar entry
-- DELETE /api/bazars/:id - Delete bazar entry
+- POST /api/bazars - Add bazar entry (with automatic wallet integration)
+- GET /api/bazars/:id - Get specific bazar with wallet deposit info
+- GET /api/bazars/summary - Get bazar summary with wallet integration
+- DELETE /api/bazars/:id - Delete bazar entry (with wallet deposit cleanup)
 
 MEAL MANAGEMENT:
 - GET /api/meals - Get mess meals

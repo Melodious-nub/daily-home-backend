@@ -83,7 +83,8 @@ const createMess = async (req, res) => {
       name, 
       address, 
       members = [], 
-      fixedCosts = [] 
+      fixedCosts = [],
+      bazarIsDeposit = false
     } = req.body;
     
     const userId = req.user._id;
@@ -187,6 +188,7 @@ const createMess = async (req, res) => {
       address,
       identifierCode,
       admin: userId,
+      bazarIsDeposit,
       members: [{ 
         user: userId, 
         role: 'admin',
@@ -935,6 +937,42 @@ const cancelJoinRequest = async (req, res) => {
   }
 };
 
+// @desc    Update mess configuration
+// @route   PUT /api/mess/config
+// @access  Private (Admin only)
+const updateMessConfig = async (req, res) => {
+  try {
+    const { bazarIsDeposit } = req.body;
+    
+    const mess = await Mess.findById(req.user.currentMess);
+    if (!mess) {
+      return res.status(404).json({ message: 'Mess not found' });
+    }
+    
+    // Check if user is admin
+    if (mess.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only mess admin can update configuration' });
+    }
+    
+    // Update configuration
+    if (typeof bazarIsDeposit === 'boolean') {
+      mess.bazarIsDeposit = bazarIsDeposit;
+    }
+    
+    await mess.save();
+    
+    res.json({
+      message: 'Mess configuration updated successfully',
+      config: {
+        bazarIsDeposit: mess.bazarIsDeposit
+      }
+    });
+  } catch (error) {
+    console.error('Error updating mess config:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createMess,
   searchMess,
@@ -948,4 +986,5 @@ module.exports = {
   checkRequestStatus,
   cancelJoinRequest,
   validateEmailForInvitation,
+  updateMessConfig,
 }; 

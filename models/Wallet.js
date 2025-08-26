@@ -18,7 +18,7 @@ const walletSchema = new Schema({
   },
   type: {
     type: String,
-    enum: ['deposit', 'withdrawal', 'meal_deduction'],
+    enum: ['deposit', 'withdrawal', 'meal_deduction', 'bazar_deposit'],
     default: 'deposit'
   },
   description: {

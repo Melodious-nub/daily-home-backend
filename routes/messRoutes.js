@@ -14,6 +14,7 @@ const {
   checkRequestStatus,
   cancelJoinRequest,
   validateEmailForInvitation,
+  updateMessConfig,
 } = require('../controllers/messController');
 
 /**
@@ -124,6 +125,9 @@ router.post('/validate-email', auth, validateEmailForInvitation);
  *                     description:
  *                       type: string
  *                       description: Optional description
+ *               bazarIsDeposit:
+ *                 type: boolean
+ *                 description: If true, bazar expenses automatically add to user wallet as deposit (optional, defaults to false)
  *     responses:
  *       201:
  *         description: Mess created successfully with invited members
@@ -677,6 +681,48 @@ router.get('/check-request-status', auth, checkRequestStatus);
  *       404:
  *         description: No pending request found
  */
+/**
+ * @swagger
+ * /api/mess/config:
+ *   put:
+ *     tags:
+ *       - Mess
+ *     summary: Update mess configuration
+ *     description: Update mess configuration settings (Admin only)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               bazarIsDeposit:
+ *                 type: boolean
+ *                 description: If true, bazar expenses automatically add to user wallet as deposit
+ *     responses:
+ *       200:
+ *         description: Mess configuration updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 config:
+ *                   type: object
+ *                   properties:
+ *                     bazarIsDeposit:
+ *                       type: boolean
+ *       403:
+ *         description: Access denied - Admin only
+ *       404:
+ *         description: Mess not found
+ */
+router.put('/config', auth, requireMess, requireMessAdmin, updateMessConfig);
+
 router.post('/cancel-request', auth, cancelJoinRequest);
 
 module.exports = router; 

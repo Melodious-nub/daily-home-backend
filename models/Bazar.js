@@ -22,6 +22,17 @@ const bazarSchema = new Schema({
     type: Schema.Types.ObjectId, 
     ref: 'User', 
     required: true 
+  },
+  // Track if this bazar was automatically added to wallet
+  walletDepositCreated: {
+    type: Boolean,
+    default: false,
+    description: 'Whether this bazar expense was automatically added to user wallet'
+  },
+  walletDepositId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Wallet',
+    description: 'Reference to the wallet deposit created for this bazar'
   }
 }, {
   timestamps: true
