@@ -78,7 +78,7 @@ router.get('/', auth, requireMess, fixedCostController.getFixedCosts);
  *               type:
  *                 type: string
  *                 enum: [houseRent, maidBill, wifiBill, electricityBill, gasBill, waterBill, cleaningBill, other]
- *                 description: Type of fixed cost (optional, defaults to 'other')
+ *                 description: Type of fixed cost (optional)
  *               description:
  *                 type: string
  *                 description: Optional description

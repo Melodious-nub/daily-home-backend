@@ -21,7 +21,6 @@ const fixedCostSchema = new Schema({
     type: String,
     required: false,
     enum: ['houseRent', 'maidBill', 'wifiBill', 'electricityBill', 'gasBill', 'waterBill', 'cleaningBill', 'other'],
-    default: 'other',
   },
   description: {
     type: String,

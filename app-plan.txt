@@ -98,7 +98,7 @@ DATABASE MODELS:
    - mess (Mess ref, required)
    - name (required)
    - amount (number, required)
-   - type (enum: houseRent, maidBill, wifiBill, etc., optional, defaults to 'other')
+   - type (enum: houseRent, maidBill, wifiBill, etc., optional)
    - description (string, optional)
    - isActive (boolean)
    - addedBy (User ref)

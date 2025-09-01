@@ -265,11 +265,26 @@ const createMess = async (req, res) => {
     const createdFixedCosts = [];
     if (fixedCosts.length > 0) {
       for (const cost of fixedCosts) {
+        // Validate required fields
+        if (!cost.name || !cost.amount) {
+          return res.status(400).json({ 
+            message: 'Fixed cost must have name and amount',
+            invalidCost: cost
+          });
+        }
+        
+        if (cost.amount <= 0) {
+          return res.status(400).json({ 
+            message: 'Fixed cost amount must be greater than 0',
+            invalidCost: cost
+          });
+        }
+
         const fixedCost = new FixedCost({
           mess: mess._id,
           name: cost.name,
           amount: cost.amount,
-          type: cost.type || 'other',
+          type: cost.type,
           description: cost.description,
           addedBy: userId
         });

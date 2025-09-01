@@ -108,26 +108,49 @@ router.post('/validate-email', auth, validateEmailForInvitation);
  *                       description: Member email address
  *               fixedCosts:
  *                 type: array
- *                 description: Array of fixed costs to add
+ *                 description: Array of fixed costs to add (optional)
  *                 items:
  *                   type: object
+ *                   required:
+ *                     - name
+ *                     - amount
  *                   properties:
  *                     name:
  *                       type: string
- *                       description: Name of the fixed cost
+ *                       description: Name of the fixed cost (required)
+ *                       example: "House Rent"
  *                     amount:
  *                       type: number
- *                       description: Amount of the fixed cost
+ *                       minimum: 0
+ *                       description: Amount of the fixed cost (required)
+ *                       example: 15000
  *                     type:
  *                       type: string
  *                       enum: [houseRent, maidBill, wifiBill, electricityBill, gasBill, waterBill, cleaningBill, other]
- *                       description: Type of fixed cost (optional, defaults to 'other')
+ *                       description: Type of fixed cost (optional)
+ *                       example: "houseRent"
  *                     description:
  *                       type: string
  *                       description: Optional description
+ *                       example: "Monthly house rent payment"
  *               bazarIsDeposit:
  *                 type: boolean
  *                 description: If true, bazar expenses automatically add to user wallet as deposit (optional, defaults to false)
+ *                 example: false
+ *           example:
+ *             name: "Student Mess #1"
+ *             address: "123 University Road, Dhaka"
+ *             members:
+ *               - email: "member1@example.com"
+ *               - email: "member2@example.com"
+ *             fixedCosts:
+ *               - name: "House Rent"
+ *                 amount: 15000
+ *               - name: "Maid/Helper cost"
+ *                 amount: 5000
+ *               - name: "Utilities"
+ *                 amount: 3000
+ *             bazarIsDeposit: true
  *     responses:
  *       201:
  *         description: Mess created successfully with invited members
