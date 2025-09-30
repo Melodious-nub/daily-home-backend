@@ -1,0 +1,17 @@
+# Cursor ignore file
+# This file tells Cursor which files to ignore for AI features
+
+# Allow .env files to be read by AI
+# .env files are now explicitly allowed
+
+# Common files to ignore for AI features
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+Thumbs.db
+
+# But explicitly allow .env files
+!.env
+!.env.*
