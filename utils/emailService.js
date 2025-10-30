@@ -3,15 +3,15 @@ const nodemailer = require('nodemailer');
 // Create transporter for beyond-border.org webmail
 const transporter = nodemailer.createTransport({
   host: 'mail.beyond-border.org',
-  port: 587,
-  secure: false, // true for 465, false for other ports (587 uses STARTTLS)
+  port: 25,
+  secure: false, // Use port 25 without encryption
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  tls: {
-    rejectUnauthorized: false
-  }
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 });
 
 // Send OTP email
@@ -36,10 +36,13 @@ const sendOTPEmail = async (email, otp, fullName) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    console.log(`Attempting to send OTP email to: ${email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('OTP Email sent successfully:', info.messageId);
     return true;
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('Email sending error:', error.message);
+    console.error('Full error:', error);
     return false;
   }
 };
@@ -66,10 +69,13 @@ const sendPasswordResetEmail = async (email, otp, fullName) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    console.log(`Attempting to send password reset email to: ${email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Password reset email sent successfully:', info.messageId);
     return true;
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('Email sending error:', error.message);
+    console.error('Full error:', error);
     return false;
   }
 };
@@ -96,10 +102,13 @@ const sendSignupVerificationEmail = async (email, otp, fullName) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    console.log(`Attempting to send signup verification email to: ${email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Signup verification email sent successfully:', info.messageId);
     return true;
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('Email sending error:', error.message);
+    console.error('Full error:', error);
     return false;
   }
 };
@@ -131,10 +140,13 @@ const sendMessRequestAcceptedEmail = async (email, fullName, messName, messAddre
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    console.log(`Attempting to send mess request accepted email to: ${email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Mess request accepted email sent successfully:', info.messageId);
     return true;
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('Email sending error:', error.message);
+    console.error('Full error:', error);
     return false;
   }
 };
@@ -165,10 +177,13 @@ const sendMessRequestRejectedEmail = async (email, fullName, messName, identifie
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    console.log(`Attempting to send mess request rejected email to: ${email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Mess request rejected email sent successfully:', info.messageId);
     return true;
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('Email sending error:', error.message);
+    console.error('Full error:', error);
     return false;
   }
 };
@@ -201,10 +216,13 @@ const sendMessInvitationEmail = async (email, fullName, messName, messAddress, i
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    console.log(`Attempting to send mess invitation email to: ${email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Mess invitation email sent successfully:', info.messageId);
     return true;
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('Email sending error:', error.message);
+    console.error('Full error:', error);
     return false;
   }
 };

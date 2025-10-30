@@ -253,7 +253,10 @@ const requestPasswordReset = async (req, res) => {
     };
     await user.save();
     // Send OTP email (reuse sendOTPEmail, pass fullName if available)
-    await sendPasswordResetEmail(user.email, otp, user.fullName || '');
+    const emailSent = await sendPasswordResetEmail(user.email, otp, user.fullName || '');
+    if (!emailSent) {
+      return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
+    }
     res.json({ message: 'OTP has been sent to your email.' });
   } catch (error) {
     console.error('Request password reset error:', error);
