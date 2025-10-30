@@ -3,11 +3,14 @@ const nodemailer = require('nodemailer');
 // Create transporter for beyond-border.org webmail
 const transporter = nodemailer.createTransport({
   host: 'mail.beyond-border.org',
-  port: 465,
-  secure: true, // true for 465, false for other ports
+  port: 587,
+  secure: false, // true for 465, false for other ports (587 uses STARTTLS)
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
